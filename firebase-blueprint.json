@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with travel preferences, source city, and settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "sourceCity": { "type": "string" },
+        "preferredCurrency": { "type": "string" },
+        "travelStyle": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "TripPlan": {
+      "title": "TripPlan",
+      "description": "Stored itinerary, source city, dates, destinations, and preferences.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "sourceCity": { "type": "string" },
+        "destination": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "daysCount": { "type": "number" },
+        "travelersCount": { "type": "number" },
+        "budgetTotal": { "type": "number" },
+        "selectedTransitMode": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "sourceCity", "destination", "startDate", "endDate"]
+    },
+    "PackingList": {
+      "title": "PackingList",
+      "description": "Customized packing checklist items for the user's destination and dates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "tripId": { "type": "string" },
+        "destinationType": { "type": "string" },
+        "items": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "destinationType"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    },
+    "/users/{userId}/trips/{tripId}": {
+      "schema": "TripPlan",
+      "description": "Saved trip plans per user"
+    },
+    "/users/{userId}/packing/{listId}": {
+      "schema": "PackingList",
+      "description": "User packing checklists"
+    }
+  }
+}

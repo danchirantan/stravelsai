@@ -1,0 +1,6 @@
+{
+  "name": "TripMind AI — Travel Intelligence & Operating System",
+  "description": "Premium AI-powered travel intelligence and trip-planning operating system that crafts personalized, route-optimized journeys, intelligent itineraries, and real-time travel assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
