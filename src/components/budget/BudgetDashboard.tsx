@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { MOCK_EXPENSES } from '../../data/mockData';
 import { Expense, Trip } from '../../types/travel';
+import { DailySpendChart } from './DailySpendChart';
+import { GeographicalSpendHeatmap } from './GeographicalSpendHeatmap';
 
 interface BudgetDashboardProps {
   trip: Trip;
@@ -28,11 +30,13 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
   const isDark = theme === 'dark';
   const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   // New expense form
   const [newTitle, setNewTitle] = useState('');
   const [newAmount, setNewAmount] = useState('');
   const [newCategory, setNewCategory] = useState<Expense['category']>('Food');
+  const [newCity, setNewCity] = useState<string>(trip.destinations?.[0] || 'Jaipur');
   const [newPaidBy, setNewPaidBy] = useState('Chirantan');
   const [newStatus, setNewStatus] = useState<'Actual' | 'Estimated'>('Actual');
 
@@ -72,6 +76,7 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
       paidBy: newPaidBy,
       date: new Date().toISOString().split('T')[0],
       status: newStatus,
+      city: newCity || trip.destinations?.[0] || 'Jaipur',
     };
 
     setExpenses([newExp, ...expenses]);
@@ -83,6 +88,16 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
   const handleDeleteExpense = (id: string) => {
     setExpenses(expenses.filter((e) => e.id !== id));
   };
+
+  // Filtered expenses based on geographical heatmap selection
+  const displayedExpenses = selectedCity
+    ? expenses.filter((e) => {
+        const lower = selectedCity.toLowerCase();
+        if (e.city && e.city.toLowerCase().includes(lower)) return true;
+        if (e.title && e.title.toLowerCase().includes(lower)) return true;
+        return false;
+      })
+    : expenses;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
@@ -186,11 +201,31 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
               TripMind Financial Optimization
             </span>
             <p className="leading-relaxed font-sans-ui">
-              You are currently ₹26,500 under your target ceiling of ₹1,25,000. Your allocated budget comfortably covers heritage haveli stays, royal thalis, and Thar desert glamping without exceeding limits.
+              {remainingBudget >= 0
+                ? `You are currently ₹${remainingBudget.toLocaleString('en-IN')} under your target ceiling of ₹${budgetCeiling.toLocaleString('en-IN')}. Your allocated budget covers verified stays, dining, and activities across ${trip.destinations?.join(', ') || 'your itinerary'}.`
+                : `Budget variance alert: You have exceeded target ceiling by ₹${Math.abs(remainingBudget).toLocaleString('en-IN')}. Check high-cost destination hubs below to balance allocations.`}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Geographical Spending Intensity Heatmap */}
+      <GeographicalSpendHeatmap
+        trip={trip}
+        expenses={expenses}
+        theme={theme}
+        currency={currency}
+        selectedCity={selectedCity}
+        onSelectCity={setSelectedCity}
+      />
+
+      {/* D3 Vector Daily Projected Spend vs Actual Spend Line Chart */}
+      <DailySpendChart
+        trip={trip}
+        expenses={expenses}
+        theme={theme}
+        currency={currency}
+      />
 
       {/* Category Breakdown & Ledger Table */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -232,10 +267,25 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
             isDark ? 'bg-[#11171C] border-white/10' : 'bg-white border-stone-200 shadow-sm'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <h3 className="font-editorial text-xl font-bold">Itemized Ledger</h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <h3 className="font-editorial text-xl font-bold">Itemized Ledger</h3>
+              {selectedCity && (
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-mono-num bg-amber-500/10 border border-amber-500/30 text-amber-300">
+                  <span>Filtered: {selectedCity}</span>
+                  <button
+                    onClick={() => setSelectedCity(null)}
+                    className="hover:text-white cursor-pointer ml-0.5"
+                    title="Clear filter"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
             <span className="text-[11px] text-stone-400 font-mono-num">
-              {expenses.length} Records
+              Showing {displayedExpenses.length} of {expenses.length} Records
             </span>
           </div>
 
@@ -244,6 +294,7 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
               <thead>
                 <tr className="border-b border-white/10 text-stone-400 font-mono-num uppercase text-[10px]">
                   <th className="pb-2">Description</th>
+                  <th className="pb-2">City / Hub</th>
                   <th className="pb-2">Category</th>
                   <th className="pb-2">Paid By</th>
                   <th className="pb-2 text-right">Amount</th>
@@ -251,9 +302,14 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {expenses.map((exp) => (
+                {displayedExpenses.map((exp) => (
                   <tr key={exp.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3 font-medium text-stone-200">{exp.title}</td>
+                    <td className="py-3 text-stone-300">
+                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono-num">
+                        {exp.city || 'Pan-Trip'}
+                      </span>
+                    </td>
                     <td className="py-3 text-stone-400">{exp.category}</td>
                     <td className="py-3 text-stone-400">{exp.paidBy}</td>
                     <td className="py-3 text-right font-mono-num font-bold text-emerald-400">
@@ -337,6 +393,21 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="text-stone-400 block mb-1">Destination City / Hub</label>
+                  <select
+                    value={newCity}
+                    onChange={(e) => setNewCity(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-xs focus:outline-none"
+                  >
+                    {trip.destinations?.map((dest) => (
+                      <option key={dest} value={dest}>
+                        {dest}
+                      </option>
+                    ))}
+                    <option value="Pan-Trip / General">Pan-Trip / General</option>
+                  </select>
+                </div>
+                <div>
                   <label className="text-stone-400 block mb-1">Paid By</label>
                   <select
                     value={newPaidBy}
@@ -348,17 +419,18 @@ export const BudgetDashboard: React.FC<BudgetDashboardProps> = ({
                     <option value="Split 50/50">Split 50/50</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-stone-400 block mb-1">Status</label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-xs focus:outline-none"
-                  >
-                    <option value="Actual">Actual (Paid)</option>
-                    <option value="Estimated">Estimated</option>
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label className="text-stone-400 block mb-1">Expense Status</label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-xs focus:outline-none"
+                >
+                  <option value="Actual">Actual (Settled / Paid)</option>
+                  <option value="Estimated">Estimated (Reserved)</option>
+                </select>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

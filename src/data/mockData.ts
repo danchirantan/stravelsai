@@ -1,92 +1,12 @@
 import { Trip, Destination, Hotel, Restaurant, Expense, Booking, TravelDocument, TravelCompanion, NotificationItem, TripMemory, SuggestedItineraryItem } from '../types/travel';
 import { RAJASTHAN_DEMO_TRIP } from './rajasthanTrip';
 import { RAJASTHAN_SUGGESTED_ITEMS } from './rajasthanSuggestions';
+import { ALL_EXPANDED_DESTINATIONS } from './destinationPlaces';
 
 // Default Demo Trip is the authentic Royal Rajasthan Journey
 export const DEMO_TRIP: Trip = RAJASTHAN_DEMO_TRIP;
 
-export const MOCK_DESTINATIONS: Destination[] = [
-  {
-    id: 'dest-rajasthan',
-    name: 'Rajasthan — The Royal Circuit',
-    country: 'India',
-    tagline: 'Vast golden Thar dunes, hilltop Rajput fortresses, and shimmering palace lakes.',
-    bestTime: 'October–March',
-    typicalBudget: '₹95,000 – ₹1,60,000 / couple',
-    flightDuration: '1h direct flight from Delhi / Mumbai',
-    weather: '22°C – 28°C · Crisp desert winter sun',
-    description: 'From the honeycombed pink sandstone of Hawa Mahal to the blue cubical rooftops beneath Mehrangarh and candlelit palace boat rides across Lake Pichola, Rajasthan is India’s greatest imperial voyage.',
-    neighborhoods: ['Pink City Heritage, Jaipur', 'Amer Foothills', 'Blue City, Jodhpur', 'Golden Fort Living Bastions, Jaisalmer', 'Lake Pichola, Udaipur'],
-    experiences: ['Sunrise Overlook from Nahargarh Ramparts', 'Mehrangarh Fort Private Curator Walk', 'Sunset Camel Safari in Thar Desert', 'Candlelit Lake Pichola Boat Cruise'],
-    highlights: ['UNESCO World Heritage Hill Forts', 'Rich Shekhawati hand-painted havelis', 'Centuries-old royal culinary heritage'],
-    imageUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=900&auto=format&fit=crop',
-    coordinates: { lat: 26.9124, lng: 75.7873 }
-  },
-  {
-    id: 'dest-kerala',
-    name: 'Kerala Backwaters & Munnar Hills',
-    country: 'India',
-    tagline: 'Emerald tea plantations, tranquil backwater houseboats, and Ayurvedic spice groves.',
-    bestTime: 'September–March',
-    typicalBudget: '₹85,000 – ₹1,40,000 / couple',
-    flightDuration: '2h 45m from Delhi / Mumbai',
-    weather: '23°C – 28°C · Tropical gentle breeze',
-    description: 'Cruise aboard a private cedar Kettuvallam houseboat through palm-fringed canals in Alleppey, then ascend into misty tea-carpeted elevations in Munnar.',
-    neighborhoods: ['Fort Kochi Heritage', 'Munnar Tea Valleys', 'Vembanad Lake, Kumarakom', 'Marari Beach'],
-    experiences: ['Overnight Private Houseboat Cruise', 'Kathakali classical drama & martial Kalaripayattu', 'High-altitude organic spice plantation trek'],
-    highlights: ['Serene interconnected inland waterways', 'World-renowned traditional Ayurveda', 'Coastal Malabar culinary feasts'],
-    imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?q=80&w=900&auto=format&fit=crop',
-    coordinates: { lat: 9.4981, lng: 76.3388 }
-  },
-  {
-    id: 'dest-ladakh',
-    name: 'Leh & Ladakh — High Mountain Passes',
-    country: 'India',
-    tagline: 'Crystalline high-altitude glacial lakes, ancient gompas, and trans-Himalayan passes.',
-    bestTime: 'May–September',
-    typicalBudget: '₹1,10,000 – ₹1,80,000 / couple',
-    flightDuration: '1h 15m scenic flight from Delhi',
-    weather: '14°C – 20°C · Alpine sunshine',
-    description: 'Dramatic snowcapped ridges reflected across the azure expanse of Pangong Tso, centuries-old Buddhist monasteries perched on rocky cliffs, and camel trails across high-altitude cold deserts.',
-    neighborhoods: ['Old Leh Bazaar', 'Shey & Thiksey', 'Nubra Valley Dunes', 'Pangong Tso Basin'],
-    experiences: ['Dawn prayers at Thiksey Monastery', 'Crossing Khardung La at 5,359 meters', 'Stargazing in Nubra cold desert'],
-    highlights: ['Pristine trans-Himalayan scenery', 'Rich Tibetan Buddhist monastic culture', 'Thrilling alpine mountain passes'],
-    imageUrl: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?q=80&w=900&auto=format&fit=crop',
-    coordinates: { lat: 34.1526, lng: 77.5771 }
-  },
-  {
-    id: 'dest-varanasi',
-    name: 'Varanasi & Khajuraho Heritage',
-    country: 'India',
-    tagline: 'Timeless spiritual ghats of the sacred Ganges and intricately carved medieval stone temples.',
-    bestTime: 'October–March',
-    typicalBudget: '₹70,000 – ₹1,20,000 / couple',
-    flightDuration: '1h 20m from Delhi',
-    weather: '20°C – 26°C · Pleasant winter',
-    description: 'Witness the incandescent evening Ganga Aarti from wooden boats along Dashashwamedh Ghat, explore ancient alleyways fragrant with sandalwood and brass, and visit Sarnath where the Buddha first preached.',
-    neighborhoods: ['Dashashwamedh Ghat', 'Assi Ghat', 'Kashi Vishwanath Corridor', 'Western Temple Complex, Khajuraho'],
-    experiences: ['Dawn wooden boat ride along the river ghats', 'Evening Grand Ganga Aarti ceremony', 'Guided exploration of Sarnath archaeological park'],
-    highlights: ['One of the world’s oldest continuously inhabited cities', 'Sublime classical music & Banarasi silk weaving', 'Profound spiritual heritage'],
-    imageUrl: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?q=80&w=900&auto=format&fit=crop',
-    coordinates: { lat: 25.3176, lng: 82.9739 }
-  },
-  {
-    id: 'dest-goa',
-    name: 'Goa & Konkan Coastal Haven',
-    country: 'India',
-    tagline: 'Portuguese colonial villas, golden Arabian Sea beaches, and spice-infused seafood.',
-    bestTime: 'November–March',
-    typicalBudget: '₹75,000 – ₹1,30,000 / couple',
-    flightDuration: '2h 15m from Delhi / Mumbai',
-    weather: '26°C – 31°C · Coastal tropical sun',
-    description: 'Lush coconut groves lining azure Arabian Sea bays, pastel 18th-century mansions in Fontainhas Latin Quarter, and vibrant beachfront sunsets.',
-    neighborhoods: ['Fontainhas Latin Quarter, Panaji', 'Assagao & Vagator', 'Mandrem & Ashwem', 'Palolem & Agonda'],
-    experiences: ['Heritage Latin Quarter architecture walking tour', 'Sunset sailing along the Mandovi river', 'Organic spice plantation lunch & Feni tasting'],
-    highlights: ['Idyllic Arabian Sea coastlines', 'Unique Indo-Portuguese architectural fusion', 'Celebrated coastal seafood culinary identity'],
-    imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?q=80&w=900&auto=format&fit=crop',
-    coordinates: { lat: 15.2993, lng: 74.1240 }
-  }
-];
+export const MOCK_DESTINATIONS: Destination[] = ALL_EXPANDED_DESTINATIONS;
 
 export const MOCK_HOTELS: Hotel[] = [
   {
@@ -144,6 +64,62 @@ export const MOCK_HOTELS: Hotel[] = [
     aiReason: '18th-century white marble royal summer palace floating in the middle of Lake Pichola. Unsurpassed romantic vistas of City Palace and Aravalli hills.',
     imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop',
     distanceToKeySpot: '5 min private boat to City Palace Jetty'
+  },
+  {
+    id: 'hotel-5',
+    name: 'Brunton Boatyard Heritage Retreat',
+    city: 'Kochi',
+    rating: 4.95,
+    reviewsCount: 340,
+    pricePerNight: 21000,
+    currency: 'INR',
+    style: 'Colonial Harbour Villa',
+    amenities: ['Harbour Sea-view Verandahs', 'Private Pier Sunset Cruises', 'Ayurvedic Treatment Suites', 'Cochin Spice Waterfront Dining'],
+    aiReason: 'Restored Victorian shipyard architecture looking out over Chinese fishing nets and historic Cochin channel waters.',
+    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800&auto=format&fit=crop',
+    distanceToKeySpot: '4 min walk to Vasco da Gama Square'
+  },
+  {
+    id: 'hotel-6',
+    name: 'The Grand Dragon Ladakh',
+    city: 'Leh',
+    rating: 4.93,
+    reviewsCount: 460,
+    pricePerNight: 18500,
+    currency: 'INR',
+    style: 'High-Altitude Luxury Sanctuary',
+    amenities: ['Oxygen-Enriched Executive Suites', 'Stok Kangri Mountain Glacier Vistas', 'Underfloor Heating', 'Zasgyath Ladakhi Specialty Dining'],
+    aiReason: 'Premier luxury retreat in Leh offering medical-grade oxygen support and traditional Ladakhi carved cedar woodwork.',
+    imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800&auto=format&fit=crop',
+    distanceToKeySpot: '10 min walk to Old Leh Bazaar'
+  },
+  {
+    id: 'hotel-7',
+    name: 'Ahilya by the Sea',
+    city: 'Panaji',
+    rating: 4.97,
+    reviewsCount: 310,
+    pricePerNight: 26000,
+    currency: 'INR',
+    style: 'Seaside Portuguese Estate',
+    amenities: ['Two Seawater Infinity Pools', 'Banyan Tree Frangipani Gardens', 'Private Al Fresco Dining', 'Direct Dolphin Bay Oceanfront'],
+    aiReason: 'Private family haven tucked away at Dolphin Bay in Nerul, surrounded by curated Indian and Portuguese antiquities.',
+    imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800&auto=format&fit=crop',
+    distanceToKeySpot: '12 min drive to Fontainhas Latin Quarter'
+  },
+  {
+    id: 'hotel-8',
+    name: 'BrijRama Palace on Darbhanga Ghat',
+    city: 'Varanasi',
+    rating: 4.98,
+    reviewsCount: 580,
+    pricePerNight: 28000,
+    currency: 'INR',
+    style: 'Sacred Riverfront Palace',
+    amenities: ['Private Bajra Riverboat Arrivals', 'Darbhanga Ghat Private Terrace', 'Live Classical Morning Sitar Recitals', 'Pure Vegetarian Royal Sattvic Dining'],
+    aiReason: '1812 Maratha dynasty stone fortress standing directly over the sacred Ganges steps, with hand-carved stone balconies.',
+    imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800&auto=format&fit=crop',
+    distanceToKeySpot: 'Steps from Dashashwamedh Ganga Aarti'
   }
 ];
 
@@ -207,17 +183,80 @@ export const MOCK_RESTAURANTS: Restaurant[] = [
     aiContext: 'Reserved frontline waterside table for your Day 7 farewell dinner as twilight settles over Lake Pichola.',
     imageUrl: 'https://images.unsplash.com/photo-1579027989536-b7b1f875659b?q=80&w=800&auto=format&fit=crop',
     recommendedDish: 'Mewari Khargosh or Paneer Tikka Lababdar with Saffron Pulao'
+  },
+  {
+    id: 'rest-5',
+    name: 'Malabar Junction at The Malabar House',
+    city: 'Kochi',
+    cuisine: 'Kerala Seafood & Coastal Fusion',
+    rating: 4.94,
+    priceTier: '₹₹₹',
+    avgPrice: 3100,
+    atmosphere: 'Lush open courtyard with mango trees and classical Karnatic instrumentals',
+    distance: 'Parade Ground, Fort Kochi',
+    dietary: ['Fresh Wild Catch', 'Gluten-Free coconut curries'],
+    aiContext: 'Waterfront dinner after sunset at the Chinese fishing nets; features fresh jumbo prawns simmered in raw mango gravy.',
+    imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop',
+    recommendedDish: 'Meen Pollichathu wrapped in charred banana leaf with red Kerala Matta rice'
+  },
+  {
+    id: 'rest-6',
+    name: 'The Tibetan Kitchen',
+    city: 'Leh',
+    cuisine: 'Himalayan & Ladakhi Heritage',
+    rating: 4.91,
+    priceTier: '₹₹',
+    avgPrice: 2200,
+    atmosphere: 'Warm wooden pine dining room with yak-wool rugs and mountain vistas',
+    distance: 'Fort Road, Leh',
+    dietary: ['Comforting warming broths', 'Vegetarian momos'],
+    aiContext: 'Steaming bowl of hand-pulled Skyu stew to nourish after crossing Khardung La pass.',
+    imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop',
+    recommendedDish: 'Traditional Skyu Root Stew and Tingmo steamed lotus buns'
+  },
+  {
+    id: 'rest-7',
+    name: 'Viva Panjim Heritage Tavern',
+    city: 'Panaji',
+    cuisine: 'Goan-Portuguese Ancestral',
+    rating: 4.93,
+    priceTier: '₹₹',
+    avgPrice: 2400,
+    atmosphere: 'Cozy 18th-century heritage house courtyard on 31st January Road',
+    distance: 'Fontainhas Latin Quarter',
+    dietary: ['Seafood specialties', 'Ancestral recipes'],
+    aiContext: 'Authentic dinner following your heritage walk through the pastel alleys of Fontainhas.',
+    imageUrl: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?q=80&w=800&auto=format&fit=crop',
+    recommendedDish: 'Pork Vindaloo slow-braised with palm vinegar & warm Bebinca with vanilla ice cream'
+  },
+  {
+    id: 'rest-8',
+    name: 'Kashi Chaat Bhandar & Godowlia Sweets',
+    city: 'Varanasi',
+    cuisine: 'Kashi Sacred Street Gastronomy',
+    rating: 4.96,
+    priceTier: '₹',
+    avgPrice: 900,
+    atmosphere: 'Vibrant timeless street-side hearth serving earthenware clay bowls',
+    distance: 'Godowlia Chowk, Varanasi',
+    dietary: ['Pure Vegetarian', 'Sattvic preparation'],
+    aiContext: 'Unmissable culinary stop right after evening Ganga Aarti at Dashashwamedh Ghat.',
+    imageUrl: 'https://images.unsplash.com/photo-1579027989536-b7b1f875659b?q=80&w=800&auto=format&fit=crop',
+    recommendedDish: 'Tamatar Chaat sizzled with desi ghee, topped with cumin syrup and crisp sev'
   }
 ];
 
 export const MOCK_EXPENSES: Expense[] = [
-  { id: 'exp-1', category: 'Flights', title: 'Air India Express Flight (DEL ↔ JAI)', amount: 14500, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-01', status: 'Actual' },
-  { id: 'exp-2', category: 'Hotels', title: 'Samode Haveli Jaipur (2 Nights)', amount: 39000, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-08', status: 'Actual' },
-  { id: 'exp-3', category: 'Hotels', title: 'RAAS Jodhpur Heritage Suite (1 Night)', amount: 24800, currency: 'INR', paidBy: 'Elena', date: '2026-11-10', status: 'Actual' },
-  { id: 'exp-4', category: 'Hotels', title: 'Suryagarh Thar Desert Camp (1 Night)', amount: 21000, currency: 'INR', paidBy: 'Elena', date: '2026-11-11', status: 'Actual' },
-  { id: 'exp-5', category: 'Transport', title: 'Vande Bharat Express Rail Passes (Jaipur to Jodhpur)', amount: 4800, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-10', status: 'Actual' },
-  { id: 'exp-6', category: 'Activities', title: 'Thar Desert Private Camel Sunset Safari & Campfire', amount: 4200, currency: 'INR', paidBy: 'Elena', date: '2026-11-11', status: 'Actual' },
-  { id: 'exp-7', category: 'Food', title: 'Estimated Royal Thali & Palace Dining Budget', amount: 16200, currency: 'INR', paidBy: 'Split', date: '2026-11-08', status: 'Estimated' },
+  { id: 'exp-1', category: 'Flights', title: 'Air India Express Flight (DEL ↔ JAI)', amount: 14500, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-01', status: 'Actual', city: 'Jaipur' },
+  { id: 'exp-2', category: 'Hotels', title: 'Samode Haveli Jaipur (2 Nights)', amount: 39000, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-08', status: 'Actual', city: 'Jaipur' },
+  { id: 'exp-3', category: 'Hotels', title: 'RAAS Jodhpur Heritage Suite (1 Night)', amount: 24800, currency: 'INR', paidBy: 'Elena', date: '2026-11-10', status: 'Actual', city: 'Jodhpur' },
+  { id: 'exp-4', category: 'Hotels', title: 'Suryagarh Thar Desert Camp (1 Night)', amount: 21000, currency: 'INR', paidBy: 'Elena', date: '2026-11-11', status: 'Actual', city: 'Jaisalmer' },
+  { id: 'exp-5', category: 'Transport', title: 'Vande Bharat Express Rail Passes (Jaipur to Jodhpur)', amount: 4800, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-10', status: 'Actual', city: 'Jodhpur' },
+  { id: 'exp-6', category: 'Activities', title: 'Thar Desert Private Camel Sunset Safari & Campfire', amount: 4200, currency: 'INR', paidBy: 'Elena', date: '2026-11-11', status: 'Actual', city: 'Jaisalmer' },
+  { id: 'exp-7', category: 'Food', title: 'Estimated Royal Thali & Palace Dining Budget', amount: 16200, currency: 'INR', paidBy: 'Split', date: '2026-11-08', status: 'Estimated', city: 'Udaipur' },
+  { id: 'exp-8', category: 'Hotels', title: 'Taj Lake Pichola Sanctuary Suite (2 Nights)', amount: 46000, currency: 'INR', paidBy: 'Chirantan', date: '2026-11-13', status: 'Actual', city: 'Udaipur' },
+  { id: 'exp-9', category: 'Activities', title: 'City Palace Private Boat & Jagmandir Access', amount: 5500, currency: 'INR', paidBy: 'Elena', date: '2026-11-13', status: 'Actual', city: 'Udaipur' },
+  { id: 'exp-10', category: 'Shopping', title: 'Johari Bazaar Handcrafted Silver & Textiles', amount: 7800, currency: 'INR', paidBy: 'Elena', date: '2026-11-09', status: 'Actual', city: 'Jaipur' },
 ];
 
 export const MOCK_BOOKINGS: Booking[] = [

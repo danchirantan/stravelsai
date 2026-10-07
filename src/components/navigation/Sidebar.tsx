@@ -16,7 +16,8 @@ import {
   Users,
   Radio,
   Plus,
-  Zap
+  Zap,
+  FileText
 } from 'lucide-react';
 
 export type ActiveTab =
@@ -28,6 +29,7 @@ export type ActiveTab =
   | 'copilot'
   | 'recommendations'
   | 'destinations'
+  | 'summaries'
   | 'hotels'
   | 'restaurants'
   | 'budget'
@@ -56,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   openCreateTripModal,
   openCopilot,
   openStudio,
-  tripTitle = 'Rajasthan — The Royal Journey',
+  tripTitle = 'Active Journey',
   theme,
 }) => {
   const isDark = theme === 'dark';
@@ -202,6 +204,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <Compass className="w-3.5 h-3.5" />
               <span>Destination Explorer</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('summaries')}
+              className={`w-full text-left ${navItemClass('summaries')}`}
+            >
+              <FileText className="w-3.5 h-3.5 text-purple-400" />
+              <div className="flex items-center justify-between w-full">
+                <span>Trip Summaries</span>
+                <span className="text-[10px] font-mono-num px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold">
+                  PDF Ready
+                </span>
+              </div>
             </button>
             {openStudio && (
               <button

@@ -45,7 +45,10 @@ import {
 import { EMERGENCY_CONTACTS, EMERGENCY_FACILITIES, WILDERNESS_DISTRESS_PROTOCOLS } from '../../data/emergencyRescueData';
 import { OfflineMapStorage } from '../../services/offlineMapStorage';
 
+import { Trip } from '../../types/travel';
+
 interface EmergencyRescueHubProps {
+  trip?: Trip;
   theme: 'dark' | 'light';
   onClose: () => void;
   onViewLocationOnMap?: (lat: number, lng: number, title: string) => void;
@@ -53,6 +56,7 @@ interface EmergencyRescueHubProps {
 }
 
 export const EmergencyRescueHub: React.FC<EmergencyRescueHubProps> = ({
+  trip,
   theme,
   onClose,
   onViewLocationOnMap,
@@ -65,10 +69,13 @@ export const EmergencyRescueHub: React.FC<EmergencyRescueHubProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<EmergencyCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const initialLat = trip?.days?.[0]?.activities?.[0]?.coordinates?.lat || 26.9124;
+  const initialLng = trip?.days?.[0]?.activities?.[0]?.coordinates?.lng || 75.7873;
+
   // Live GPS Telemetry
   const [gpsTelemetry, setGpsTelemetry] = useState<LiveGpsTelemetry>({
-    lat: 26.9124,
-    lng: 75.7873,
+    lat: initialLat,
+    lng: initialLng,
     altitude: 431,
     accuracy: 12,
     heading: 45,

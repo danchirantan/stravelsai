@@ -49,6 +49,7 @@ import {
 } from '../../data/packingPresets';
 import { Trip, DestinationWeather, WeatherDisruptionAlert } from '../../types/travel';
 import { WeatherClient } from '../../services/weatherClient';
+import { AiPackingAssistant } from './AiPackingAssistant';
 
 interface PackingChecklistProps {
   theme: 'dark' | 'light';
@@ -513,19 +514,24 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
       });
     }
 
-    // 3. Desert Evening Chill Alert
+    // 3. Evening Chill / Alpine Cold Alert
     if (
       temp <= 18 ||
       cityLower.includes('jaisalmer') ||
       cityLower.includes('bikaner') ||
+      cityLower.includes('leh') ||
+      cityLower.includes('shimla') ||
+      cityLower.includes('manali') ||
       trip?.title.toLowerCase().includes('desert') ||
-      trip?.title.toLowerCase().includes('rajasthan')
+      trip?.title.toLowerCase().includes('ladakh') ||
+      trip?.title.toLowerCase().includes('himalaya') ||
+      trip?.title.toLowerCase().includes('alpine')
     ) {
       alerts.push({
         id: `alert-cold-${selectedWeatherCity}`,
         type: 'cold',
-        headline: `Sharp Night Temperature Drop in ${selectedWeatherCity} (~${temp <= 14 ? temp : 12}°C) — Don't forget warm evening layers`,
-        subtext: `Desert nights cool down rapidly after sunset. Nights at desert luxury camps plunge below 14°C. Ensure you pack a warm fleece mid-layer or authentic wool shawl for evening terrace dining and desert camp safaris.`,
+        headline: `Sharp Night Temperature Drop in ${selectedWeatherCity} (~${temp <= 14 ? temp : 12}°C) — Pack warm evening layers`,
+        subtext: `Temperatures drop rapidly after dusk in ${selectedWeatherCity}. Ensure you pack a warm fleece mid-layer, windproof jacket, or wool shawl for late evenings.`,
         badge: 'Evening Chill Advisory',
         icon: '🌙',
         severity: 'advisory',
@@ -795,6 +801,44 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
       triggerWeatherToast(`✓ Added ${addedCount} recommended weather items to "${activeList.name}"!`);
     } else {
       triggerWeatherToast(`✓ Recommended weather items are already in your checklist!`);
+    }
+  };
+
+  // Add AI suggested items directly to active list
+  const handleAddAiSuggestedItems = (items: Omit<PackingItem, 'id' | 'packed'>[]) => {
+    if (!activeList) return;
+    let addedCount = 0;
+    const newItemsToAdd: PackingItem[] = [];
+
+    items.forEach((item, idx) => {
+      const alreadyExists = activeList.items.some(
+        (existing) => existing.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+      );
+      if (!alreadyExists) {
+        newItemsToAdd.push({
+          ...item,
+          id: `item-ai-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+          packed: false,
+          quantity: item.quantity || 1,
+        });
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      setLists((prev) =>
+        prev.map((list) => {
+          if (list.id !== activeList.id) return list;
+          return {
+            ...list,
+            items: [...newItemsToAdd, ...list.items],
+            updatedAt: new Date().toLocaleDateString(),
+          };
+        })
+      );
+      triggerWeatherToast(`✨ Added ${addedCount} AI-recommended items to "${activeList.name}"!`);
+    } else {
+      triggerWeatherToast(`✓ Recommended items are already in your packing list!`);
     }
   };
 
@@ -1279,6 +1323,17 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
           </div>
         </div>
       </div>
+
+      {/* AI Packing Assistant: Personalized Itinerary & Real-Time Weather Forecast Suggestions */}
+      <AiPackingAssistant
+        trip={trip}
+        effectiveWeather={effectiveWeather}
+        selectedWeatherCity={selectedWeatherCity}
+        existingItems={activeList?.items || []}
+        onAddItems={handleAddAiSuggestedItems}
+        theme={theme}
+        onToast={triggerWeatherToast}
+      />
 
       {/* 4. Real-Time Destination Weather & Meteorological Packing Alerts */}
       <div
@@ -1876,6 +1931,14 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
                               {item.priority === 'optional' && (
                                 <span className="text-[9px] font-mono-num uppercase px-1.5 py-0.2 rounded bg-white/5 text-stone-400 border border-white/10">
                                   Optional
+                                </span>
+                              )}
+
+                              {/* AI Recommended Badge */}
+                              {item.aiSuggested && (
+                                <span className="text-[9px] font-mono-num uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1">
+                                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                                  <span>AI Suggested</span>
                                 </span>
                               )}
 

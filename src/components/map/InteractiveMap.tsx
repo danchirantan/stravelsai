@@ -24,7 +24,13 @@ import {
   Radio,
   ShieldAlert,
   Crosshair,
-  PhoneCall
+  PhoneCall,
+  HardDrive,
+  BookOpen,
+  HeartPulse,
+  Compass,
+  Shield,
+  Activity
 } from 'lucide-react';
 import { Trip } from '../../types/travel';
 import { OfflineMapModal } from './OfflineMapModal';
@@ -59,6 +65,7 @@ export interface MapMarker {
   aiNote: string;
   city: string;
   isSaved?: boolean;
+  isOriginGateway?: boolean;
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
@@ -154,6 +161,48 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const allMarkers: MapMarker[] = useMemo(() => {
     const markers: MapMarker[] = [];
+    const tripTitleLower = trip.title.toLowerCase();
+    const destsLower = trip.destinations.map((d) => d.toLowerCase());
+
+    const isKerala = tripTitleLower.includes('kerala') || destsLower.some((d) => d.includes('kochi') || d.includes('munnar') || d.includes('alleppey'));
+    const isLadakh = tripTitleLower.includes('ladakh') || destsLower.some((d) => d.includes('leh') || d.includes('nubra') || d.includes('pangong'));
+    const isGoa = tripTitleLower.includes('goa') || destsLower.some((d) => d.includes('panaji') || d.includes('palolem') || d.includes('vagator'));
+    const isVaranasi = tripTitleLower.includes('varanasi') || destsLower.some((d) => d.includes('kashi') || d.includes('sarnath'));
+    const isHimachal = tripTitleLower.includes('himachal') || destsLower.some((d) => d.includes('shimla') || d.includes('manali') || d.includes('dharamshala'));
+
+    // Extract all valid coordinates to compute dynamic bounding box
+    const validCoords: { lat: number; lng: number }[] = [];
+    trip.days.forEach((day) => {
+      day.activities.forEach((act) => {
+        if (act.coordinates?.lat && act.coordinates?.lng) {
+          validCoords.push({ lat: act.coordinates.lat, lng: act.coordinates.lng });
+        }
+      });
+    });
+
+    let minLat = validCoords.length > 0 ? Math.min(...validCoords.map((c) => c.lat)) : 24.5;
+    let maxLat = validCoords.length > 0 ? Math.max(...validCoords.map((c) => c.lat)) : 27.5;
+    let minLng = validCoords.length > 0 ? Math.min(...validCoords.map((c) => c.lng)) : 70.8;
+    let maxLng = validCoords.length > 0 ? Math.max(...validCoords.map((c) => c.lng)) : 76.5;
+
+    // Buffer to avoid dividing by 0 or clumped margins
+    if (maxLat - minLat < 0.25) {
+      minLat -= 0.35;
+      maxLat += 0.35;
+    }
+    if (maxLng - minLng < 0.25) {
+      minLng -= 0.35;
+      maxLng += 0.35;
+    }
+
+    const projectCoords = (lat: number, lng: number) => {
+      const normX = Math.max(0, Math.min(1, (lng - minLng) / (maxLng - minLng)));
+      const normY = Math.max(0, Math.min(1, (maxLat - lat) / (maxLat - minLat)));
+      const x = Math.round(160 + normX * 680);
+      const y = Math.round(140 + normY * 420);
+      return { x, y };
+    };
+
     trip.days.forEach((day) => {
       day.activities.forEach((act) => {
         let layerType: MapLayerType = 'attractions';
@@ -166,21 +215,21 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           layerType = 'transportationRoutes';
           cat = 'Transit';
         } else if (
+          act.category === 'Hotels' ||
           act.category === 'Relaxation' ||
           act.title.toLowerCase().includes('hotel') ||
           act.title.toLowerCase().includes('haveli') ||
           act.title.toLowerCase().includes('check-in') ||
-          act.title.toLowerCase().includes('palace')
+          act.title.toLowerCase().includes('palace') ||
+          act.title.toLowerCase().includes('resort')
         ) {
           layerType = 'hotels';
           cat = 'Hotels';
         }
 
-        const lat = act.coordinates?.lat || 26.9;
-        const lng = act.coordinates?.lng || 75.8;
-
-        const x = Math.min(880, Math.max(120, Math.round(180 + ((lng - 70.8) / 5.2) * 600)));
-        const y = Math.min(580, Math.max(120, Math.round(500 - ((lat - 24.5) / 2.6) * 360)));
+        const lat = act.coordinates?.lat || (minLat + maxLat) / 2;
+        const lng = act.coordinates?.lng || (minLng + maxLng) / 2;
+        const { x, y } = projectCoords(lat, lng);
 
         markers.push({
           id: act.id,
@@ -197,51 +246,278 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
     });
 
-    markers.push(
-      {
-        id: 'm-raj-saved-1',
-        title: 'Galta Ji (Monkey Temple) Sun Temple',
-        category: 'Saved Places',
-        layerType: 'savedPlaces',
-        dayNumber: 0,
-        cost: 500,
-        city: 'Jaipur',
-        coordinates: { x: 790, y: 220, lat: 26.915, lng: 75.86 },
-        aiNote: 'Saved: 18th-century temple complex in narrow Aravalli pass.',
-        isSaved: true,
-      },
-      {
-        id: 'm-raj-saved-2',
-        title: 'Ranakpur Jain Marble Temples (1,444 Pillars)',
-        category: 'Saved Places',
-        layerType: 'savedPlaces',
-        dayNumber: 0,
-        cost: 1200,
-        city: 'Pali / Ranakpur',
-        coordinates: { x: 480, y: 440, lat: 25.116, lng: 73.473 },
-        aiNote: 'Saved: Architectural wonder carved from light-colored marble.',
-        isSaved: true,
-      },
-      {
-        id: 'm-raj-saved-3',
-        title: 'Kuldhara Abandoned Ghost Village',
-        category: 'Saved Places',
-        layerType: 'savedPlaces',
-        dayNumber: 0,
-        cost: 400,
-        city: 'Jaisalmer',
-        coordinates: { x: 160, y: 300, lat: 26.871, lng: 70.785 },
-        aiNote: 'Saved: 13th-century cursed heritage village left overnight.',
-        isSaved: true,
-      }
-    );
+    // Destination-specific Saved Places
+    if (isKerala) {
+      const p1 = projectCoords(10.2851, 76.5698);
+      const p2 = projectCoords(9.6178, 76.4301);
+      const p3 = projectCoords(9.6014, 76.2974);
+      markers.push(
+        {
+          id: 'm-ker-saved-1',
+          title: 'Athirappilly Rainforest Waterfalls (Niagara of India)',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 250,
+          city: 'Thrissur / Chalakudy',
+          coordinates: { x: p1.x, y: p1.y, lat: 10.2851, lng: 76.5698 },
+          aiNote: 'Saved: 80-foot majestic cascading waterfall amidst pristine Western Ghats canopy.',
+          isSaved: true,
+        },
+        {
+          id: 'm-ker-saved-2',
+          title: 'Kumarakom Bird Sanctuary & Vembanad Marshlands',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 400,
+          city: 'Kumarakom',
+          coordinates: { x: p2.x, y: p2.y, lat: 9.6178, lng: 76.4301 },
+          aiNote: 'Saved: 14-acre haven for migratory Siberian storks and egrets on Vembanad Lake.',
+          isSaved: true,
+        },
+        {
+          id: 'm-ker-saved-3',
+          title: 'Marari White Sand Coconut Beach Sanctuary',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 0,
+          city: 'Mararikulam',
+          coordinates: { x: p3.x, y: p3.y, lat: 9.6014, lng: 76.2974 },
+          aiNote: 'Saved: Tranquil Arabian Sea shore untouched by commercial resorts.',
+          isSaved: true,
+        }
+      );
+    } else if (isLadakh) {
+      const p1 = projectCoords(34.1952, 77.3485);
+      const p2 = projectCoords(34.2812, 76.7745);
+      const p3 = projectCoords(34.0578, 77.6669);
+      markers.push(
+        {
+          id: 'm-lad-saved-1',
+          title: 'Magnetic Hill & Indus-Zanskar Sangam Confluence',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 0,
+          city: 'Nimmu, Ladakh',
+          coordinates: { x: p1.x, y: p1.y, lat: 34.1952, lng: 77.3485 },
+          aiNote: 'Saved: Gravity-defying visual phenomenon and two-tone river confluence.',
+          isSaved: true,
+        },
+        {
+          id: 'm-lad-saved-2',
+          title: 'Lamayuru Moonland & 11th-Century Yungdrung Gompa',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 300,
+          city: 'Lamayuru',
+          coordinates: { x: p2.x, y: p2.y, lat: 34.2812, lng: 76.7745 },
+          aiNote: 'Saved: Surreal eroded lunar geological formations and Tibetan monastery.',
+          isSaved: true,
+        },
+        {
+          id: 'm-lad-saved-3',
+          title: 'Thiksey 12-Story Monastic Complex & Maitreya Buddha',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 150,
+          city: 'Thiksey',
+          coordinates: { x: p3.x, y: p3.y, lat: 34.0578, lng: 77.6669 },
+          aiNote: 'Saved: Historic Gompa resembling Potala Palace of Tibet.',
+          isSaved: true,
+        }
+      );
+    } else if (isGoa) {
+      const p1 = projectCoords(15.3144, 74.3144);
+      const p2 = projectCoords(15.0934, 73.9214);
+      const p3 = projectCoords(15.5185, 73.9165);
+      markers.push(
+        {
+          id: 'm-goa-saved-1',
+          title: 'Dudhsagar 4-Tier Waterfalls & Bhagwan Mahaveer Sanctuary',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 650,
+          city: 'Sonaulim, Goa',
+          coordinates: { x: p1.x, y: p1.y, lat: 15.3144, lng: 74.3144 },
+          aiNote: 'Saved: Sea of Milk 310m cascade on Mandovi river nestled in dense jungle.',
+          isSaved: true,
+        },
+        {
+          id: 'm-goa-saved-2',
+          title: 'Cabo de Rama Fort & Ocean Bluff Lookout',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 0,
+          city: 'Canacona',
+          coordinates: { x: p2.x, y: p2.y, lat: 15.0934, lng: 73.9214 },
+          aiNote: 'Saved: Ancient coastal cape fortress with panoramic Arabian Sea views.',
+          isSaved: true,
+        },
+        {
+          id: 'm-goa-saved-3',
+          title: 'Divar Island Ferry Route & Colonial Chapel Ruins',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 20,
+          city: 'Divar Island',
+          coordinates: { x: p3.x, y: p3.y, lat: 15.5185, lng: 73.9165 },
+          aiNote: 'Saved: Peaceful river island accessed only by roll-on roll-off ferry.',
+          isSaved: true,
+        }
+      );
+    } else if (isVaranasi) {
+      const p1 = projectCoords(25.2678, 83.0252);
+      const p2 = projectCoords(25.3789, 83.0245);
+      const p3 = projectCoords(25.3109, 83.0141);
+      markers.push(
+        {
+          id: 'm-var-saved-1',
+          title: 'Ramnagar 18th-Century Fortress & Vintage Car Museum',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 300,
+          city: 'Ramnagar, Varanasi',
+          coordinates: { x: p1.x, y: p1.y, lat: 25.2678, lng: 83.0252 },
+          aiNote: 'Saved: Red sandstone fort across the Ganges with antique royal armory.',
+          isSaved: true,
+        },
+        {
+          id: 'm-var-saved-2',
+          title: 'Chaukhandi Stupa & Sarnath Deer Park Relics',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 200,
+          city: 'Sarnath',
+          coordinates: { x: p2.x, y: p2.y, lat: 25.3789, lng: 83.0245 },
+          aiNote: 'Saved: Ancient 5th-century Gupta stupa commemorating Buddha arrival.',
+          isSaved: true,
+        },
+        {
+          id: 'm-var-saved-3',
+          title: 'Manikarnika Historical Ghat & Eternal Sacred Fire',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 0,
+          city: 'Varanasi',
+          coordinates: { x: p3.x, y: p3.y, lat: 25.3109, lng: 83.0141 },
+          aiNote: 'Saved: Holiest ghat of Kashi with continuous spiritual rituals.',
+          isSaved: true,
+        }
+      );
+    } else {
+      // Default Rajasthan saved places
+      markers.push(
+        {
+          id: 'm-raj-saved-1',
+          title: 'Galta Ji (Monkey Temple) Sun Temple',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 500,
+          city: 'Jaipur',
+          coordinates: { x: 790, y: 220, lat: 26.915, lng: 75.86 },
+          aiNote: 'Saved: 18th-century temple complex in narrow Aravalli pass.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-2',
+          title: 'Ranakpur Jain Marble Temples (1,444 Pillars)',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 1200,
+          city: 'Pali / Ranakpur',
+          coordinates: { x: 480, y: 440, lat: 25.116, lng: 73.473 },
+          aiNote: 'Saved: Architectural wonder carved from light-colored marble.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-3',
+          title: 'Kuldhara Abandoned Ghost Village',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 400,
+          city: 'Jaisalmer',
+          coordinates: { x: 160, y: 300, lat: 26.871, lng: 70.785 },
+          aiNote: 'Saved: 13th-century cursed heritage village left overnight.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-4',
+          title: 'Pushkar Sacred Lake & Brahma Temple',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 0,
+          city: 'Pushkar',
+          coordinates: { x: 620, y: 320, lat: 26.4897, lng: 74.5511 },
+          aiNote: 'Saved: Holy lake surrounded by 52 bathing ghats and rare Brahma shrine.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-5',
+          title: 'Jaswant Thada Translucent Marble Memorial',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 100,
+          city: 'Jodhpur',
+          coordinates: { x: 380, y: 310, lat: 26.3043, lng: 73.0242 },
+          aiNote: 'Saved: Royal cenotaph crafted from glowing Makrana marble sheets.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-6',
+          title: 'Sam Sand Dunes Camel Safari & Sunset Ridge',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 1500,
+          city: 'Jaisalmer',
+          coordinates: { x: 120, y: 320, lat: 26.8322, lng: 70.5056 },
+          aiNote: 'Saved: Vast golden Thar desert ripples with Kalbelia folk performances.',
+          isSaved: true,
+        },
+        {
+          id: 'm-raj-saved-7',
+          title: 'Jag Mandir Island Palace & Lake Pichola',
+          category: 'Saved Places',
+          layerType: 'savedPlaces',
+          dayNumber: 0,
+          cost: 500,
+          city: 'Udaipur',
+          coordinates: { x: 500, y: 550, lat: 24.5677, lng: 73.6782 },
+          aiNote: 'Saved: Floating marble island palace with stone elephant sentinels.',
+          isSaved: true,
+        }
+      );
+    }
 
-    // Map 24x7 Emergency Facilities, Trauma Centers & Desert Camel Patrol Posts
-    EMERGENCY_FACILITIES.forEach((fac) => {
+    // Filter and map relevant emergency facilities
+    const relevantFacilities = EMERGENCY_FACILITIES.filter((fac) => {
+      if (isKerala) return fac.city.includes('Kochi') || fac.city.includes('Alleppey');
+      if (isLadakh) return fac.city.includes('Leh');
+      if (isGoa) return fac.city.includes('Panaji') || fac.city.includes('Goa');
+      if (isVaranasi) return fac.city.includes('Varanasi');
+      return ['Jaipur', 'Jodhpur', 'Jaisalmer', 'Udaipur'].includes(fac.city);
+    });
+
+    relevantFacilities.forEach((fac) => {
       const lat = fac.coordinates.lat;
       const lng = fac.coordinates.lng;
-      const x = Math.min(880, Math.max(120, Math.round(180 + ((lng - 70.8) / 5.2) * 600)));
-      const y = Math.min(580, Math.max(120, Math.round(500 - ((lat - 24.5) / 2.6) * 360)));
+      const { x, y } = projectCoords(lat, lng);
 
       markers.push({
         id: `fac-${fac.id}`,
@@ -254,6 +530,22 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         coordinates: { x, y, lat, lng },
         aiNote: `24x7 Emergency Rescue Facility (${fac.category}): ${fac.address}. Emergency Phone: ${fac.phone}`,
       });
+    });
+
+    // Add Departure Origin Gateway Marker
+    const srcCity = trip.sourceCity || 'New Delhi / NCR';
+    const firstDest = trip.destinations[0] || 'Destination Hub';
+    markers.push({
+      id: 'm-origin-gateway',
+      title: `Origin Gateway: ${srcCity}`,
+      category: 'Transit',
+      layerType: 'transportationRoutes',
+      dayNumber: 0,
+      cost: 0,
+      city: srcCity,
+      coordinates: { x: 890, y: 110, lat: 28.6139, lng: 77.209 },
+      aiNote: `Departure Gateway: ${srcCity}. High-speed corridor connecting directly to ${firstDest}.`,
+      isOriginGateway: true,
     });
 
     return markers;
@@ -552,97 +844,277 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
           <rect width="100%" height="100%" fill="url(#grid)" />
 
-          {/* Landmass Outlines & Geological Landmarks */}
-          {isIndia ? (
-            <>
-              {/* Abstract Landmass Outlines for Rajasthan (Jaipur - Jodhpur - Jaisalmer - Udaipur) */}
-              <path
-                d="M 140 180 Q 320 110 520 130 T 820 160 Q 910 240 870 380 T 680 560 Q 520 600 370 540 T 130 400 Q 80 260 140 180 Z"
-                fill={isDark ? '#141C24' : '#D5DCE2'}
-                stroke={isDark ? '#233240' : '#B8C4CE'}
-                strokeWidth="2"
-              />
+          {/* Landmass Outlines & Geological Landmarks tailored to Active Destination */}
+          {(() => {
+            const tripTitleLower = trip.title.toLowerCase();
+            const destsLower = trip.destinations.map((d) => d.toLowerCase());
 
-              {/* Lake Pichola & Fateh Sagar (Udaipur Lake District) */}
-              <ellipse
-                cx="505"
-                cy="495"
-                rx="35"
-                ry="22"
-                fill={isDark ? '#0B0F13' : '#E5E9EC'}
-                stroke={isDark ? '#1D2A36' : '#A2B3C2'}
-                strokeWidth="1.5"
-              />
+            const isKerala = tripTitleLower.includes('kerala') || destsLower.some((d) => d.includes('kochi') || d.includes('munnar') || d.includes('alleppey'));
+            const isLadakh = tripTitleLower.includes('ladakh') || destsLower.some((d) => d.includes('leh') || d.includes('nubra') || d.includes('pangong'));
+            const isGoa = tripTitleLower.includes('goa') || destsLower.some((d) => d.includes('panaji') || d.includes('palolem') || d.includes('vagator'));
+            const isVaranasi = tripTitleLower.includes('varanasi') || destsLower.some((d) => d.includes('kashi') || d.includes('sarnath'));
+            const isHimachal = tripTitleLower.includes('himachal') || destsLower.some((d) => d.includes('shimla') || d.includes('manali') || d.includes('dharamshala'));
 
-              {/* Thar Desert Dunes Ripple (Jaisalmer) */}
-              <path
-                d="M 120 220 Q 180 240 240 210 T 310 230"
-                fill="none"
-                stroke={isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(217, 119, 6, 0.45)'}
-                strokeWidth="2"
-                strokeDasharray="4 4"
-              />
-
-              {/* Regional Cultural Area Labels */}
-              <text
-                x="720"
-                y="180"
-                className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60"
-              >
-                DHUNDHAR · JAIPUR PINK CITY
-              </text>
-              <text
-                x="360"
-                y="260"
-                className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60"
-              >
-                MARWAR · JODHPUR SUN CITY
-              </text>
-              <text
-                x="110"
-                y="270"
-                className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60"
-              >
-                THAR DESERT · JAISALMER
-              </text>
-              <text
-                x="440"
-                y="550"
-                className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60"
-              >
-                MEWAR · UDAIPUR LAKE SANCTUARY
-              </text>
-
-              {/* Royal Highway Route Path (Animated Glowing Dashed Line) */}
-              {layerFilters.transportationRoutes && (
+            if (isKerala) {
+              return (
                 <>
+                  {/* Western Ghats & Coastal Malabar Landmass */}
                   <path
-                    d="M 780 220 Q 590 270 430 320 T 180 280 Q 320 420 510 490"
-                    fill="none"
-                    stroke="url(#routeGradient)"
-                    strokeWidth="3.5"
-                    strokeDasharray="6 4"
-                    className="animate-pulse"
+                    d="M 220 100 Q 360 180 340 320 T 310 490 Q 280 580 230 550 T 200 380 Q 180 240 220 100 Z"
+                    fill={isDark ? '#141C24' : '#D5DCE2'}
+                    stroke={isDark ? '#233240' : '#B8C4CE'}
+                    strokeWidth="2"
                   />
-                  {/* Highway Connections */}
-                  <path
-                    d="M 780 220 L 760 200 L 800 240"
-                    fill="none"
-                    stroke={isDark ? 'rgba(56, 189, 248, 0.45)' : 'rgba(14, 165, 233, 0.6)'}
+                  {/* Vembanad Lagoon & Backwaters Waterway */}
+                  <ellipse
+                    cx="285"
+                    cy="430"
+                    rx="45"
+                    ry="28"
+                    fill={isDark ? '#0B0F13' : '#E5E9EC'}
+                    stroke={isDark ? '#1D2A36' : '#A2B3C2'}
                     strokeWidth="1.5"
-                    strokeDasharray="3 3"
                   />
+                  {/* Arabian Sea Waves Ripple */}
                   <path
-                    d="M 430 320 L 450 300 L 420 350"
+                    d="M 160 260 Q 190 280 220 260 T 250 280"
                     fill="none"
-                    stroke={isDark ? 'rgba(56, 189, 248, 0.45)' : 'rgba(14, 165, 233, 0.6)'}
-                    strokeWidth="1.5"
-                    strokeDasharray="3 3"
+                    stroke={isDark ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.45)'}
+                    strokeWidth="2"
+                    strokeDasharray="4 4"
                   />
+                  {/* Kerala Regional Labels */}
+                  <text x="210" y="160" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    MALABAR COAST · KOCHI SPICE PORT
+                  </text>
+                  <text x="480" y="240" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    WESTERN GHATS · MUNNAR TEA HIGHLANDS
+                  </text>
+                  <text x="450" y="380" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    PERIYAR WILDLIFE · THEKKADY RESERVE
+                  </text>
+                  <text x="180" y="520" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    VEMBANAD LAGOON · ALLEPPEY CANALS
+                  </text>
                 </>
-              )}
+              );
+            }
+
+            if (isLadakh) {
+              return (
+                <>
+                  {/* High Mountain Karakoram & Zanskar Ridge Landmass */}
+                  <path
+                    d="M 160 220 Q 320 120 540 140 T 820 180 Q 860 310 760 440 T 440 540 Q 280 520 180 410 Z"
+                    fill={isDark ? '#141C24' : '#D5DCE2'}
+                    stroke={isDark ? '#233240' : '#B8C4CE'}
+                    strokeWidth="2"
+                  />
+                  {/* Pangong Tso Glacial Basin */}
+                  <path
+                    d="M 680 340 Q 750 310 820 330 T 890 310"
+                    fill="none"
+                    stroke="#38BDF8"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    className="opacity-70"
+                  />
+                  {/* Alpine Pass Contours */}
+                  <path
+                    d="M 380 210 L 460 170 L 520 220"
+                    fill="none"
+                    stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'}
+                    strokeWidth="2"
+                    strokeDasharray="4 4"
+                  />
+                  {/* Ladakh Regional Labels */}
+                  <text x="240" y="310" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    INDUS VALLEY · LEH (3,524m)
+                  </text>
+                  <text x="360" y="170" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    KHARDUNG LA PASS · 5,359m
+                  </text>
+                  <text x="560" y="190" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    SHYOK VALLEY · NUBRA HUNDER DUNES
+                  </text>
+                  <text x="640" y="420" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    GLACIAL BASIN · PANGONG TSO (4,250m)
+                  </text>
+                </>
+              );
+            }
+
+            if (isGoa) {
+              return (
+                <>
+                  {/* Konkan Coast Laterite Landmass */}
+                  <path
+                    d="M 280 140 Q 420 180 400 320 T 360 510 Q 280 540 240 480 T 260 260 Z"
+                    fill={isDark ? '#141C24' : '#D5DCE2'}
+                    stroke={isDark ? '#233240' : '#B8C4CE'}
+                    strokeWidth="2"
+                  />
+                  {/* Mandovi & Zuari River Estuary */}
+                  <path
+                    d="M 240 280 Q 320 290 380 270"
+                    fill="none"
+                    stroke="#38BDF8"
+                    strokeWidth="4"
+                    className="opacity-60"
+                  />
+                  {/* Goa Regional Labels */}
+                  <text x="260" y="210" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    NORTH GOA · VAGATOR & ASSAGAO
+                  </text>
+                  <text x="320" y="320" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    CENTRAL GOA · PANAJI & OLD GOA
+                  </text>
+                  <text x="280" y="460" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    SOUTH GOA · PALOLEM & CABO DE RAMA
+                  </text>
+                </>
+              );
+            }
+
+            if (isVaranasi) {
+              return (
+                <>
+                  {/* Sacred Ganga Crescent River Arc */}
+                  <path
+                    d="M 320 540 Q 460 380 390 210 T 480 110"
+                    fill="none"
+                    stroke="#38BDF8"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    className="opacity-70"
+                  />
+                  {/* Varanasi Regional Labels */}
+                  <text x="440" y="320" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    SACRED GANGA · DASHASHWAMEDH GHAT
+                  </text>
+                  <text x="220" y="440" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    ANCIENT KASHI · VISHWANATH CORRIDOR
+                  </text>
+                  <text x="480" y="160" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    SARNATH · DEER PARK & DHAMEK STUPA
+                  </text>
+                </>
+              );
+            }
+
+            if (isHimachal) {
+              return (
+                <>
+                  {/* Himachal Alpine Valley Outlines */}
+                  <path
+                    d="M 180 240 Q 340 140 560 160 T 810 210 Q 760 390 620 480 T 260 460 Z"
+                    fill={isDark ? '#141C24' : '#D5DCE2'}
+                    stroke={isDark ? '#233240' : '#B8C4CE'}
+                    strokeWidth="2"
+                  />
+                  <text x="260" y="410" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    THE RIDGE · SHIMLA CAPITAL
+                  </text>
+                  <text x="420" y="280" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    BEAS GORGE · KULLU & MANALI
+                  </text>
+                  <text x="560" y="190" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    SOLANG GLACIER · ROHTANG CORRIDOR
+                  </text>
+                  <text x="180" y="290" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    LITTLE LHASA · MCLEOD GANJ & DHARAMSHALA
+                  </text>
+                </>
+              );
+            }
+
+            // Default: Rajasthan circuit or generic destination
+            const firstD = trip.destinations[0] || 'Destination Region';
+            const secondD = trip.destinations[1] || '';
+            const thirdD = trip.destinations[2] || '';
+
+            return (
+              <>
+                {/* Abstract Landmass Outlines */}
+                <path
+                  d="M 140 180 Q 320 110 520 130 T 820 160 Q 910 240 870 380 T 680 560 Q 520 600 370 540 T 130 400 Q 80 260 140 180 Z"
+                  fill={isDark ? '#141C24' : '#D5DCE2'}
+                  stroke={isDark ? '#233240' : '#B8C4CE'}
+                  strokeWidth="2"
+                />
+
+                {/* Lake/Water Body */}
+                <ellipse
+                  cx="505"
+                  cy="495"
+                  rx="35"
+                  ry="22"
+                  fill={isDark ? '#0B0F13' : '#E5E9EC'}
+                  stroke={isDark ? '#1D2A36' : '#A2B3C2'}
+                  strokeWidth="1.5"
+                />
+
+                {/* Geographic Ripple */}
+                <path
+                  d="M 120 220 Q 180 240 240 210 T 310 230"
+                  fill="none"
+                  stroke={isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(217, 119, 6, 0.45)'}
+                  strokeWidth="2"
+                  strokeDasharray="4 4"
+                />
+
+                {/* Regional Cultural Area Labels */}
+                <text x="680" y="180" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                  {firstD.toUpperCase()} CIRCUIT
+                </text>
+                {secondD && (
+                  <text x="360" y="260" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    {secondD.toUpperCase()} DISTRICT
+                  </text>
+                )}
+                {thirdD && (
+                  <text x="110" y="270" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                    {thirdD.toUpperCase()} SECTOR
+                  </text>
+                )}
+                <text x="440" y="550" className="font-editorial text-sm font-bold fill-stone-400 tracking-widest opacity-60">
+                  HERITAGE CORRIDOR
+                </text>
+              </>
+            );
+          })()}
+
+          {/* Highway & Transit Corridor Paths */}
+          {layerFilters.transportationRoutes && (
+            <>
+              {/* Inbound Arterial from Departure Origin to First Destination */}
+              <path
+                d="M 890 110 Q 780 160 680 220"
+                fill="none"
+                stroke="#38BDF8"
+                strokeWidth="3"
+                strokeDasharray="6 4"
+                className="animate-pulse"
+              />
+              <text
+                x="760"
+                y="145"
+                className="font-mono-num text-[9px] font-bold fill-sky-400 opacity-90 tracking-wider"
+              >
+                GATEWAY EXPRESS CORRIDOR
+              </text>
+
+              {/* Dynamic Connecting Route between Activity Clusters */}
+              <path
+                d="M 680 220 Q 520 260 400 320 T 220 300 Q 340 430 480 480"
+                fill="none"
+                stroke="url(#routeGradient)"
+                strokeWidth="3.5"
+                strokeDasharray="6 4"
+                className="animate-pulse"
+              />
             </>
-          ) : null}
+          )}
 
           {/* GPS Breadcrumb Trail from Offline Tracker */}
           {isBreadcrumbTrailVisible && breadcrumbs.length > 0 && (
@@ -692,7 +1164,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             let pinColor = '#10B981'; // default emerald
             let ringColor = 'rgba(16, 185, 129, 0.3)';
 
-            if (marker.layerType === 'hotels') {
+            if (marker.isOriginGateway) {
+              pinColor = '#6366F1'; // vibrant indigo
+              ringColor = 'rgba(99, 102, 241, 0.45)';
+            } else if (marker.layerType === 'hotels') {
               pinColor = '#F59E0B'; // warm amber
               ringColor = 'rgba(245, 158, 11, 0.35)';
             } else if (marker.layerType === 'restaurants') {
@@ -879,8 +1354,330 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
             <span>Saved</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span>Emergency 24x7</span>
+          </div>
         </div>
       </div>
+
+      {/* Offline Status & Cartography Cache Readiness Bar */}
+      {cachedPackage ? (
+        <div
+          className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+            isDark
+              ? 'bg-emerald-950/20 border-emerald-500/30 text-stone-200'
+              : 'bg-emerald-50 border-emerald-200 text-stone-800'
+          }`}
+        >
+          <div className="flex items-start md:items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <HardDrive className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono-num font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  Offline Vector Map Ready
+                </span>
+                <span className="text-xs font-mono-num text-stone-400">
+                  {cachedPackage.sizeFormatted} · Saved {cachedPackage.downloadedAt}
+                </span>
+              </div>
+              <p className="text-xs text-stone-300 mt-0.5">
+                Route cached for <strong>{cachedPackage.destinations.join(' → ')}</strong> with{' '}
+                {cachedPackage.waypointsCount} stops and {cachedPackage.cachedFacilitiesCount} emergency facilities. Zero data connection needed.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsBreadcrumbTrailVisible((v) => !v)}
+              className="px-3 py-1.5 rounded-xl border border-white/10 hover:border-sky-400 text-xs font-mono-num text-stone-300 hover:text-white transition-colors cursor-pointer bg-black/30 flex items-center gap-1.5"
+            >
+              <Activity className="w-3.5 h-3.5 text-sky-400" />
+              <span>{isBreadcrumbTrailVisible ? 'Hide GPS Trail' : 'Show GPS Trail'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsOfflineModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono-num font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Manage Offline Vault</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+            isDark
+              ? 'bg-[#11171C] border-white/10 text-stone-300'
+              : 'bg-white border-stone-200 text-stone-800 shadow-sm'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <WifiOff className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className="text-xs">
+              <strong className="text-white block font-sans-ui">Headed to remote areas without cellular connectivity?</strong>
+              <span className="text-stone-400">Download the full itinerary route, vector coordinates, and emergency facilities package for offline use.</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsOfflineModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono-num font-bold text-xs transition-all shadow-md shrink-0 cursor-pointer flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Offline Map</span>
+          </button>
+        </div>
+      )}
+
+      {/* Emergency Rescue Command Grid: 8 Comprehensive Rescue Types & SOS */}
+      <div
+        className={`p-5 rounded-3xl border transition-all space-y-4 ${
+          isDark
+            ? 'bg-gradient-to-b from-[#11171C] to-black border-rose-500/20 shadow-xl'
+            : 'bg-white border-stone-200 shadow-lg'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 text-xs font-mono-num text-rose-400">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              <span>24x7 COMPREHENSIVE EMERGENCY RESCUE, GPS TRACKER & SOS MATRIX</span>
+            </div>
+            <h3 className="font-editorial text-xl font-bold text-white flex items-center gap-2">
+              <span>Emergency Rescue & Distress Dispatch Hub</span>
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setRescueHubInitialTab('sos');
+                setIsRescueHubOpen(true);
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono-num font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer animate-pulse"
+            >
+              <Siren className="w-3.5 h-3.5" />
+              <span>Launch SOS Beacon</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setRescueHubInitialTab('tracker');
+                setIsRescueHubOpen(true);
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-sky-600/30 hover:bg-sky-600/50 border border-sky-400/40 text-sky-200 text-xs font-mono-num font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Radio className="w-3.5 h-3.5 text-sky-400" />
+              <span>Live GPS ({breadcrumbs.length})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 8 Rescue Type Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+          {/* 1. Medical & Trauma */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-rose-950/30 border border-white/5 hover:border-rose-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🚑</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 font-bold border border-rose-500/30">
+                Dial 108
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-rose-300 transition-colors">
+              Medical & Trauma
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              Apex ICU hospitals & rapid ambulance dispatch.
+            </p>
+          </button>
+
+          {/* 2. Air Ambulance & Helicopter */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-sky-950/30 border border-white/5 hover:border-sky-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🚁</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-sky-950 text-sky-300 font-bold border border-sky-500/30">
+                Dial 1066
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-sky-300 transition-colors">
+              Air Medevac
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              ICU helicopter airlift from remote dunes/passes.
+            </p>
+          </button>
+
+          {/* 3. Desert & Wilderness SAR */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-amber-950/30 border border-white/5 hover:border-amber-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🐪</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 font-bold border border-amber-500/30">
+                Thar SAR
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-amber-300 transition-colors">
+              Desert Patrol
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              Lost trekker search, camel squad & 4x4 stuck recovery.
+            </p>
+          </button>
+
+          {/* 4. Highway Breakdown & Towing */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-emerald-950/30 border border-white/5 hover:border-emerald-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🛣️</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30">
+                Dial 1033
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-emerald-300 transition-colors">
+              Highway 1033
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              NHAI 24x7 towing, tire puncture & fuel breakdown.
+            </p>
+          </button>
+
+          {/* 5. Police & 112 ERSS */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-blue-950/30 border border-white/5 hover:border-blue-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">👮</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 font-bold border border-blue-500/30">
+                Dial 112
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-blue-300 transition-colors">
+              Unified ERSS
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              Tourist police & automated GPS dispatch coordination.
+            </p>
+          </button>
+
+          {/* 6. Fire & Disaster NDRF */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-orange-950/30 border border-white/5 hover:border-orange-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🚒</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-orange-950 text-orange-300 font-bold border border-orange-500/30">
+                101 / 1070
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-orange-300 transition-colors">
+              Disaster / Fire
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              Flash floods, structure rescue & SDRF force.
+            </p>
+          </button>
+
+          {/* 7. Women Safety Sakhi 181 */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('directory');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-pink-950/30 border border-white/5 hover:border-pink-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">🚺</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-pink-950 text-pink-300 font-bold border border-pink-500/30">
+                1090 / 181
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-pink-300 transition-colors">
+              Women Safety
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              24x7 anti-harassment cell & transit escort.
+            </p>
+          </button>
+
+          {/* 8. Wilderness Protocols */}
+          <button
+            onClick={() => {
+              setRescueHubInitialTab('protocols');
+              setIsRescueHubOpen(true);
+            }}
+            className="p-3.5 rounded-2xl bg-black/40 hover:bg-purple-950/30 border border-white/5 hover:border-purple-500/40 text-left transition-all group cursor-pointer space-y-1"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl">📖</span>
+              <span className="text-[10px] font-mono-num px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 font-bold border border-purple-500/30">
+                Distress Code
+              </span>
+            </div>
+            <strong className="text-white block font-editorial text-sm group-hover:text-purple-300 transition-colors">
+              Distress Protocols
+            </strong>
+            <p className="text-[11px] text-stone-400 leading-snug">
+              3-blast whistle codes, snakebite & air signals.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* Offline Map Package Modal */}
+      {isOfflineModalOpen && (
+        <OfflineMapModal
+          trip={trip}
+          theme={theme}
+          cachedPackage={cachedPackage}
+          onPackageUpdated={(pkg) => setCachedPackage(pkg)}
+          onClose={() => setIsOfflineModalOpen(false)}
+        />
+      )}
+
+      {/* Emergency Rescue Command Hub Modal */}
+      {isRescueHubOpen && (
+        <EmergencyRescueHub
+          trip={trip}
+          theme={theme}
+          onClose={() => setIsRescueHubOpen(false)}
+          onViewLocationOnMap={handleViewLocationOnMap}
+          initialTab={rescueHubInitialTab}
+        />
+      )}
     </div>
   );
 };

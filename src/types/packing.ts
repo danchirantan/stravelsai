@@ -28,6 +28,8 @@ export interface PackingItem {
   priority: ItemPriority;
   notes?: string;
   weightGrams?: number;
+  aiSuggested?: boolean;
+  aiReason?: string;
 }
 
 export interface PackingList {

@@ -40,3 +40,20 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(150, 150, 150, 0.35);
 }
+
+/* Subtle entrance animation for notifications */
+@keyframes notifSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-notif-enter {
+  animation: notifSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+

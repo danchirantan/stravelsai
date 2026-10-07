@@ -135,11 +135,11 @@ export const ExploreIndiaView: React.FC<ExploreIndiaViewProps> = ({
                   Clear
                 </button>
                 <button
-                  onClick={() => onSelectDestinationForPlanning('Rajasthan')}
+                  onClick={() => onSelectDestinationForPlanning(activeStateMeta?.name || searchQuery || 'India')}
                   className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>AI Plan India Journey</span>
+                  <span>AI Plan {activeStateMeta ? activeStateMeta.name : 'India'} Journey</span>
                 </button>
               </div>
             </div>

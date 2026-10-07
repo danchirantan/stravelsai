@@ -47,35 +47,35 @@ export const TravelModeView: React.FC<TravelModeViewProps> = ({
 
   const activeDay = trip.days?.[0] || {
     dayNumber: 1,
-    city: 'Jaipur',
-    theme: 'Arrival in the Pink City & Royal Bazaars',
-    weather: { temp: '26°C', condition: 'Clear Desert Sunshine', icon: 'Sun' },
+    city: trip.destinations?.[0] || 'Destination Hub',
+    theme: 'Arrival & Welcome Exploration',
+    weather: { temp: '26°C', condition: 'Pleasant & Sunny', icon: 'Sun' },
     activities: [] as Activity[]
   };
 
-  const city = activeDay.city || trip.destinations?.[0] || 'Jaipur';
-  const nowActivity = activeDay.activities?.[1] || {
-    title: 'Sunset View of Hawa Mahal (Palace of Winds)',
-    location: 'Badi Choupad, Old Pink City',
-    time: '15:30',
+  const city = activeDay.city || trip.destinations?.[0] || 'Destination';
+  const nowActivity = activeDay.activities?.[0] || {
+    title: `Arrival & Exploration in ${city}`,
+    location: `${city} Central`,
+    time: '11:30',
     duration: '1h 30m',
-    aiReason: 'Afternoon sun illuminates the 953 honeycombed pink sandstone jharokhas.'
+    aiReason: 'Optimal timing for check-in and orientation.'
   };
 
-  const nextActivity = activeDay.activities?.[2] || {
-    title: 'Johari Bazaar Gemstone & Textile Heritage Walk',
-    location: 'Johari Bazaar Road, Jaipur',
-    time: '18:00',
-    duration: '1h 45m',
-    aiReason: 'Centuries-old market for authentic Kundan jewelry, Meenakari enamel, and hand-block prints.'
+  const nextActivity = activeDay.activities?.[1] || {
+    title: `Heritage Walk & Scenic Viewpoint in ${city}`,
+    location: `${city} Historic Quarter`,
+    time: '15:30',
+    duration: '2h',
+    aiReason: 'Gentle afternoon light and minimal transit friction.'
   };
 
-  const afterActivity = activeDay.activities?.[3] || {
-    title: 'Royal Rajasthani Thali Feast at LMB 1954',
-    location: 'Johari Bazaar Central',
-    time: '20:00',
+  const afterActivity = activeDay.activities?.[2] || {
+    title: `Traditional Feast & Evening Experience in ${city}`,
+    location: `${city} Dining Quarter`,
+    time: '19:30',
     duration: '1h 45m',
-    aiReason: 'Reserved table ready for the authentic 16-dish royal thali featuring Ker Sangri & Dal Baati Churma.'
+    aiReason: 'Reserved table ready for authentic local dishes.'
   };
 
   return (

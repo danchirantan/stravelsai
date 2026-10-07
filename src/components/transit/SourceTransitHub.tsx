@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Compass,
   MapPin,
@@ -23,7 +23,11 @@ import {
   Sun,
   Moon,
   CloudRain,
-  Leaf
+  Leaf,
+  Plus,
+  Trash2,
+  Route,
+  Zap
 } from 'lucide-react';
 import { Trip, Booking } from '../../types/travel';
 import {
@@ -55,12 +59,32 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
 
   // State for user's Source City and Journey Dates
   const [sourceCity, setSourceCity] = useState<string>(trip.sourceCity || 'New Delhi / NCR');
+  const [destinations, setDestinations] = useState<string[]>(
+    trip.destinations?.length > 0 ? trip.destinations : ['Jaipur', 'Jodhpur', 'Jaisalmer', 'Udaipur']
+  );
+  const [newDestInput, setNewDestInput] = useState<string>('');
+  const [showAddDest, setShowAddDest] = useState<boolean>(false);
+  const [activeLegIndex, setActiveLegIndex] = useState<number>(0);
+  const [autoSync, setAutoSync] = useState<boolean>(true);
+
   const [customCityInput, setCustomCityInput] = useState<string>('');
   const [showCustomCity, setShowCustomCity] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<string>(trip.startDate || '2026-10-15');
   const [endDate, setEndDate] = useState<string>(trip.endDate || '2026-10-21');
   const [activeTab, setActiveTab] = useState<'comparison' | 'flights' | 'trains' | 'cabs' | 'weather'>('comparison');
   const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Sync state when trip prop changes
+  useEffect(() => {
+    if (trip.sourceCity && trip.sourceCity !== sourceCity) {
+      setSourceCity(trip.sourceCity);
+    }
+    if (trip.destinations && trip.destinations.length > 0) {
+      setDestinations(trip.destinations);
+    }
+    if (trip.startDate) setStartDate(trip.startDate);
+    if (trip.endDate) setEndDate(trip.endDate);
+  }, [trip.sourceCity, trip.destinations, trip.startDate, trip.endDate]);
 
   // Calculate duration in days
   const durationDays = useMemo(() => {
@@ -71,30 +95,69 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
     return Math.max(1, diff);
   }, [startDate, endDate]);
 
-  // Derived options based on source city and destination
+  // Generate multi-stop legs: Inbound, Intercity hops, and Return
+  const transitLegs = useMemo(() => {
+    const legs: { id: string; from: string; to: string; label: string; tag: string }[] = [];
+    if (destinations.length > 0) {
+      legs.push({
+        id: 'leg-inbound',
+        from: sourceCity,
+        to: destinations[0],
+        label: `${sourceCity.split('/')[0].trim()} ➔ ${destinations[0]}`,
+        tag: 'Inbound Gateway',
+      });
+      for (let i = 0; i < destinations.length - 1; i++) {
+        legs.push({
+          id: `leg-inter-${i}`,
+          from: destinations[i],
+          to: destinations[i + 1],
+          label: `${destinations[i]} ➔ ${destinations[i + 1]}`,
+          tag: 'Intercity Hub',
+        });
+      }
+      legs.push({
+        id: 'leg-return',
+        from: destinations[destinations.length - 1],
+        to: sourceCity,
+        label: `${destinations[destinations.length - 1]} ➔ ${sourceCity.split('/')[0].trim()}`,
+        tag: 'Return Journey',
+      });
+    }
+    return legs;
+  }, [sourceCity, destinations]);
+
+  const activeLeg = transitLegs[activeLegIndex] || transitLegs[0] || {
+    id: 'leg-default',
+    from: sourceCity,
+    to: destinations[0] || 'Destination Hub',
+    label: `${sourceCity} ➔ ${destinations[0] || 'Destination Hub'}`,
+    tag: 'Gateway',
+  };
+
+  // Derived options based on active leg source and destination
   const flightOptions = useMemo(
-    () => getFlightsForRoute(sourceCity, trip.title),
-    [sourceCity, trip.title]
+    () => getFlightsForRoute(activeLeg.from, activeLeg.to),
+    [activeLeg.from, activeLeg.to]
   );
 
   const trainOptions = useMemo(
-    () => getTrainsForRoute(sourceCity, trip.title),
-    [sourceCity, trip.title]
+    () => getTrainsForRoute(activeLeg.from, activeLeg.to),
+    [activeLeg.from, activeLeg.to]
   );
 
   const cabOptions = useMemo(
-    () => getCabsForRoute(sourceCity, trip.title),
-    [sourceCity, trip.title]
+    () => getCabsForRoute(activeLeg.from, activeLeg.to),
+    [activeLeg.from, activeLeg.to]
   );
 
   const comparisons = useMemo(
-    () => getMultiModalComparison(sourceCity),
-    [sourceCity]
+    () => getMultiModalComparison(activeLeg.from, activeLeg.to),
+    [activeLeg.from, activeLeg.to]
   );
 
   const weatherEstimations = useMemo(
-    () => getDateWeatherEstimations(startDate, endDate, trip.title),
-    [startDate, endDate, trip.title]
+    () => getDateWeatherEstimations(startDate, endDate, activeLeg.to),
+    [startDate, endDate, activeLeg.to]
   );
 
   const triggerToast = (msg: string) => {
@@ -102,12 +165,11 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
     setTimeout(() => setSuccessToast(null), 3500);
   };
 
-  // Sync back to master trip object
-  const handleApplyJourneyConfig = () => {
+  // Helper to sync changes directly into master trip object
+  const applyTripUpdate = (newSrc: string, newDests: string[], newStart: string, newEnd: string, showToastMsg: boolean = false) => {
     if (!onUpdateTrip) return;
 
-    // Recalculate days dates
-    const s = new Date(startDate);
+    const s = new Date(newStart);
     const updatedDays = trip.days.map((day, idx) => {
       const dayDate = new Date(s.getTime() + idx * 86400000);
       const formattedDate = dayDate.toLocaleDateString('en-US', {
@@ -121,17 +183,71 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
       };
     });
 
+    const diff = Math.round((new Date(newEnd).getTime() - s.getTime()) / 86400000) + 1;
+    const calcDays = Math.max(1, isNaN(diff) ? trip.daysCount : diff);
+
     const updatedTrip: Trip = {
       ...trip,
-      sourceCity,
-      startDate,
-      endDate,
-      daysCount: durationDays,
+      sourceCity: newSrc,
+      destinations: newDests,
+      startDate: newStart,
+      endDate: newEnd,
+      daysCount: calcDays,
       days: updatedDays,
     };
 
     onUpdateTrip(updatedTrip);
-    triggerToast(`✓ Journey updated: Departing from ${sourceCity} (${startDate} to ${endDate}, ${durationDays} days)`);
+    if (showToastMsg) {
+      triggerToast(`✓ Synced: Origin ${newSrc} · ${newDests.join(' → ')} (${newStart} to ${newEnd})`);
+    }
+  };
+
+  const handleSourceCityChange = (newCity: string) => {
+    setSourceCity(newCity);
+    if (autoSync) {
+      applyTripUpdate(newCity, destinations, startDate, endDate, true);
+    }
+  };
+
+  const handleStartDateChange = (newDate: string) => {
+    setStartDate(newDate);
+    if (autoSync) {
+      applyTripUpdate(sourceCity, destinations, newDate, endDate, false);
+    }
+  };
+
+  const handleEndDateChange = (newDate: string) => {
+    setEndDate(newDate);
+    if (autoSync) {
+      applyTripUpdate(sourceCity, destinations, startDate, newDate, false);
+    }
+  };
+
+  const handleAddDestination = () => {
+    if (!newDestInput.trim()) return;
+    const trimmed = newDestInput.trim();
+    if (destinations.includes(trimmed)) return;
+    const updated = [...destinations, trimmed];
+    setDestinations(updated);
+    setNewDestInput('');
+    setShowAddDest(false);
+    applyTripUpdate(sourceCity, updated, startDate, endDate, true);
+  };
+
+  const handleRemoveDestination = (destToRemove: string) => {
+    if (destinations.length <= 1) {
+      triggerToast('⚠️ At least one destination required in itinerary');
+      return;
+    }
+    const updated = destinations.filter((d) => d !== destToRemove);
+    setDestinations(updated);
+    setActiveLegIndex(0);
+    applyTripUpdate(sourceCity, updated, startDate, endDate, true);
+  };
+
+  // Manual flush sync back to master trip object
+  const handleApplyJourneyConfig = () => {
+    applyTripUpdate(sourceCity, destinations, startDate, endDate, true);
   };
 
   const handleSelectFlight = (fl: FlightOption) => {
@@ -187,7 +303,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
       reference: `CAB-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       date: startDate,
       time: '07:00 AM Departure',
-      location: `${sourceCity} to Jaipur / Rajasthan via NE4 Expressway`,
+      location: `${activeLeg.from} to ${activeLeg.to} via Express Highway Corridor`,
       status: 'Confirmed',
       cost: cab.estimatedPrice,
       currency: 'INR',
@@ -273,7 +389,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
                   {SOURCE_CITIES.slice(0, 6).map((city) => (
                     <button
                       key={city.id}
-                      onClick={() => setSourceCity(city.name)}
+                      onClick={() => handleSourceCityChange(city.name)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-mono-num transition-all cursor-pointer ${
                         sourceCity === city.name
                           ? 'bg-emerald-600 text-white font-bold shadow-md'
@@ -288,7 +404,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
                   <span className="text-[11px] text-stone-400">Other hubs:</span>
                   <select
                     value={sourceCity}
-                    onChange={(e) => setSourceCity(e.target.value)}
+                    onChange={(e) => handleSourceCityChange(e.target.value)}
                     className="px-2.5 py-1 rounded bg-black/30 border border-white/10 text-white text-xs font-mono-num focus:outline-none"
                   >
                     {SOURCE_CITIES.map((c) => (
@@ -302,25 +418,80 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
             )}
           </div>
 
-          {/* 2. Destination (Fixed & Synchronized) */}
-          <div className="lg:col-span-3 space-y-1 p-4 rounded-xl bg-black/20 border border-white/5">
-            <span className="text-[10px] font-mono-num uppercase tracking-wider text-stone-400 block">
-              Destination Circuit
-            </span>
-            <div className="font-editorial text-lg font-bold text-white flex items-center gap-2">
-              <span>{trip.destinations?.slice(0, 3).join(' → ') || 'Jaipur → Jodhpur → Udaipur'}</span>
+          {/* 2. Destination Circuit (Dynamic & Synchronized) */}
+          <div className="lg:col-span-4 space-y-2.5 p-4 rounded-xl bg-black/20 border border-white/5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono-num uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+                <Route className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Destination Circuit ({destinations.length} Stops)</span>
+              </span>
+              <button
+                onClick={() => setShowAddDest(!showAddDest)}
+                className="text-[11px] text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Add Stop</span>
+              </button>
             </div>
-            <span className="text-[11px] text-emerald-400 font-mono-num block">
-              Rajasthan Royal Heritage Corridor
-            </span>
+
+            {showAddDest ? (
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={newDestInput}
+                  onChange={(e) => setNewDestInput(e.target.value)}
+                  placeholder="e.g. Pushkar, Bikaner, Ranakpur..."
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  onClick={handleAddDestination}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => setShowAddDest(false)}
+                  className="px-2 py-1.5 rounded-lg bg-white/5 text-stone-400 text-xs hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : null}
+
+            {/* Destination Badges */}
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {destinations.map((dest, idx) => (
+                <div
+                  key={`${dest}-${idx}`}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-stone-200 text-xs font-medium"
+                >
+                  <span className="font-mono-num text-[10px] text-emerald-400">{idx + 1}.</span>
+                  <span>{dest}</span>
+                  {destinations.length > 1 && (
+                    <button
+                      onClick={() => handleRemoveDestination(dest)}
+                      title={`Remove ${dest}`}
+                      className="ml-1 text-stone-400 hover:text-rose-400 cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="text-[10px] text-stone-400 flex items-center gap-1">
+              <span>Corridor:</span>
+              <span className="text-emerald-400 font-mono-num">{sourceCity.split('/')[0].trim()} ➔ {destinations.join(' ➔ ')}</span>
+            </div>
           </div>
 
           {/* 3. Dates & Duration Picker */}
-          <div className="lg:col-span-4 space-y-3">
+          <div className="lg:col-span-3 space-y-3">
             <label className="text-xs font-mono-num uppercase tracking-wider text-stone-400 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Travel Dates & Length</span>
+                <span>Travel Dates</span>
               </span>
               <span className="text-emerald-400 font-bold">{durationDays} Days</span>
             </label>
@@ -331,7 +502,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
                 <input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-mono-num focus:outline-none focus:border-emerald-500 cursor-pointer"
                 />
               </div>
@@ -340,7 +511,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
                 <input
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/10 text-white text-xs font-mono-num focus:outline-none focus:border-emerald-500 cursor-pointer"
                 />
               </div>
@@ -348,20 +519,60 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
           </div>
         </div>
 
-        {/* Action Button: Apply to Entire App */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-stone-400">
-            <Info className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              Clicking apply updates the entire application timeline, day dates, packing manifests, and weather feeds.
+        {/* Corridor Leg Selector Strip */}
+        <div className="mt-5 pt-4 border-t border-white/10 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono-num text-stone-300 font-semibold flex items-center gap-1.5">
+              <Route className="w-3.5 h-3.5 text-sky-400" />
+              <span>Select Active Transit Leg for Multi-Modal Booking & Schedules:</span>
             </span>
+            <span className="text-[10px] text-stone-400">
+              Active Leg: <strong className="text-emerald-400">{activeLeg.label}</strong>
+            </span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {transitLegs.map((leg, idx) => (
+              <button
+                key={leg.id}
+                onClick={() => setActiveLegIndex(idx)}
+                className={`px-3 py-2 rounded-xl text-xs font-mono-num transition-all cursor-pointer flex items-center gap-2 border ${
+                  activeLegIndex === idx
+                    ? 'bg-emerald-600 text-white font-bold border-emerald-400 shadow-lg ring-2 ring-emerald-500/20'
+                    : isDark
+                    ? 'bg-black/30 border-white/10 text-stone-300 hover:text-white hover:bg-white/5'
+                    : 'bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                <span className="text-[10px] opacity-75 font-normal uppercase">{leg.tag}:</span>
+                <span>{leg.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Button & Live-Sync Toggle */}
+        <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-xs text-stone-400">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={autoSync}
+                onChange={(e) => setAutoSync(e.target.checked)}
+                className="rounded accent-emerald-500 cursor-pointer"
+              />
+              <span className="text-stone-300 font-medium flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>Instant Live Sync with Header, Map, Itinerary & AI Studio</span>
+              </span>
+            </label>
           </div>
           <button
             onClick={handleApplyJourneyConfig}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>Sync Journey Dates & Origin</span>
+            <span>Sync All Modules Now</span>
           </button>
         </div>
       </div>
@@ -576,7 +787,7 @@ export const SourceTransitHub: React.FC<SourceTransitHubProps> = ({
               <div className="flex items-center gap-2">
                 <Train className="w-4 h-4 text-sky-400 shrink-0" />
                 <span>
-                  Showing direct rail connections from <strong>{sourceCity}</strong> to Rajasthan. Vande Bharat Express (20978) offers 160 km/h cruising with hot regional catering.
+                  Showing direct rail connections from <strong>{activeLeg.from}</strong> to <strong>{activeLeg.to}</strong>. Express trains offering regional connectivity with regional pantry catering.
                 </span>
               </div>
               <span className="text-[10px] font-mono-num uppercase font-bold text-sky-300 shrink-0">

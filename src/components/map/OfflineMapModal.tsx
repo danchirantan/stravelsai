@@ -188,7 +188,7 @@ export const OfflineMapModal: React.FC<OfflineMapModalProps> = ({
               <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-stone-200 block">Full Vector Itinerary Waypoints</strong>
-                <span className="text-stone-400 text-[11px]">All 7 days of activities, havelis, fort coordinates, and opening hours.</span>
+                <span className="text-stone-400 text-[11px]">All {trip.days?.length || trip.daysCount || 5} days of activities, stays, coordinates, and opening hours.</span>
               </div>
             </div>
 
@@ -196,7 +196,7 @@ export const OfflineMapModal: React.FC<OfflineMapModalProps> = ({
               <Compass className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
               <div>
                 <strong className="text-stone-200 block">Offline Route Geometries</strong>
-                <span className="text-stone-400 text-[11px]">Royal Rajasthan highway corridor lines (Jaipur-Jodhpur-Jaisalmer-Udaipur).</span>
+                <span className="text-stone-400 text-[11px]">Highway and scenic transit corridor lines ({trip.destinations?.join(' ➔ ') || 'all stops'}).</span>
               </div>
             </div>
 

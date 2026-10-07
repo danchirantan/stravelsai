@@ -51,23 +51,17 @@ export const AiCopilotDrawer: React.FC<AiCopilotDrawerProps> = ({
     trip.title.toLowerCase().includes('rajasthan') ||
     trip.currency === 'INR';
 
-  const defaultInitText = isIndia
-    ? `Good morning. I've audited your ${trip.daysCount}-day ${trip.title} itinerary across ${trip.destinations.join(', ')}. I'm monitoring desert atmospheric conditions, fort opening hours, and royal haveli reservations in real time. How can I optimize your journey today?`
-    : `Good morning. I've audited your ${trip.daysCount}-day journey for ${trip.title}. I'm monitoring local weather alerts, transit schedules, and opening hours in real time. How can I optimize your journey today?`;
+  const firstDest = trip.destinations[0] || 'your destination';
+  const secondDest = trip.destinations[1] || trip.destinations[0] || 'the region';
 
-  const defaultPills = isIndia
-    ? [
-        'Best time to visit Amber Fort avoiding midday heat',
-        'Find a rooftop dinner overlooking Lake Pichola',
-        'Can we fit a desert sunset camel safari in Jaisalmer?',
-        'Recommend royal Rajasthani delicacies to try today',
-      ]
-    : [
-        `What should I do if it rains tomorrow?`,
-        'Find a quieter alternative to tonight’s dinner',
-        'Can we fit one more landmark today?',
-        'Calculate estimated budget impact for this week',
-      ];
+  const defaultInitText = `Good morning. I've audited your ${trip.daysCount || trip.days?.length || 5}-day ${trip.title} itinerary across ${trip.destinations.join(', ') || 'your destinations'}. I'm monitoring local meteorological conditions, route operating hours, and curated reservations in real time. How can I optimize your journey today?`;
+
+  const defaultPills = [
+    `Best time to explore ${firstDest} avoiding midday heat & crowds`,
+    `Find a scenic evening dining reservation in ${secondDest}`,
+    `Recommend authentic regional delicacies and food stops in ${firstDest}`,
+    `Calculate remaining trip budget impact and contingency reserve`,
+  ];
 
   const [messages, setMessages] = useState<Message[]>([
     {

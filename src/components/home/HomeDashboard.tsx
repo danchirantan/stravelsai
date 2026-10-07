@@ -180,8 +180,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 </div>
                 <p className="text-xs text-stone-400 leading-relaxed max-w-3xl">
                   {insightAccepted
-                    ? 'Changes accepted! Day 1 Amber Fort visit shifted to early morning (08:30 AM); reserved shaded courtyard lunch at 1135 AD.'
-                    : 'Jaipur midday forecast indicates peak desert sun (31°C) on Day 1 between 12:30 PM and 15:00 PM. We recommend visiting Amber Fort at 08:30 AM and enjoying shaded courtyard dining during peak heat.'}
+                    ? `Changes accepted! Day 1 schedule for ${trip.days[0]?.city || trip.destinations[0]} optimized for midday weather; high-heat / weather buffer applied.`
+                    : `${trip.days[0]?.city || trip.destinations[0]} midday forecast indicates peak conditions (${trip.days[0]?.weather?.temp || '28°C'}) on Day 1. We recommend prioritizing morning outdoor visits and enjoying shaded or indoor cultural dining during peak afternoon hours.`}
                 </p>
               </div>
             </div>
@@ -306,9 +306,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                   <span>Origin & Transit</span>
                 </div>
                 <span className="text-xs font-semibold block text-sky-300 truncate">
-                  {trip.sourceCity ? trip.sourceCity.split('/')[0] : 'New Delhi'}
+                  {trip.sourceCity ? trip.sourceCity.split('/')[0].trim() : 'New Delhi'}
                 </span>
-                <span className="text-[10px] text-stone-400 truncate block">Vande Bharat / Road</span>
+                <span className="text-[10px] text-stone-400 truncate block">
+                  ➔ {trip.destinations?.[0] || 'Destination'} Gateway
+                </span>
               </div>
 
               <div
@@ -322,7 +324,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                   <span>Flights & Rail</span>
                 </div>
                 <span className="text-xs font-semibold block text-emerald-400">Confirmed</span>
-                <span className="text-[10px] text-stone-400 truncate block">AI 491 & Vande Bharat</span>
+                <span className="text-[10px] text-stone-400 truncate block">Inbound & Regional Rail</span>
               </div>
 
               <div
@@ -333,10 +335,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               >
                 <div className="flex items-center gap-1.5 text-stone-400 mb-1 text-[11px]">
                   <Building className="w-3.5 h-3.5" />
-                  <span>Hotels & Camps</span>
+                  <span>Hotels & Stays</span>
                 </div>
                 <span className="text-xs font-semibold block text-emerald-400">Reserved</span>
-                <span className="text-[10px] text-stone-400 truncate block">Samode Haveli & Desert Camp</span>
+                <span className="text-[10px] text-stone-400 truncate block">{trip.destinations?.[0] || 'Curated'} Heritage Stays</span>
               </div>
 
               <div
@@ -433,7 +435,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {destinations.slice(0, 3).map((dest) => (
+          {destinations.slice(0, 6).map((dest) => (
             <div
               key={dest.id}
               onClick={() => setActiveTab('destinations')}
@@ -449,9 +451,16 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <span className="absolute top-3 left-3 text-[10px] font-mono-num font-semibold uppercase px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-emerald-300 border border-white/10">
-                  {dest.country}
-                </span>
+                <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono-num font-semibold uppercase px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-emerald-300 border border-white/10">
+                    {dest.country}
+                  </span>
+                  {dest.places && dest.places.length > 0 && (
+                    <span className="text-[10px] font-mono-num font-semibold px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-emerald-200 border border-emerald-500/20">
+                      {dest.places.length} Places
+                    </span>
+                  )}
+                </div>
                 <div className="absolute bottom-3 left-3 right-3 text-white">
                   <h4 className="font-editorial text-xl font-bold">{dest.name}</h4>
                 </div>
@@ -461,6 +470,24 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 <p className="text-xs text-stone-400 line-clamp-2 leading-relaxed">
                   {dest.tagline}
                 </p>
+
+                {dest.places && dest.places.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {dest.places.slice(0, 3).map((pl) => (
+                      <span
+                        key={pl.id}
+                        className="text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/5 text-stone-300 truncate max-w-[140px]"
+                      >
+                        {pl.name.split('(')[0].trim()}
+                      </span>
+                    ))}
+                    {dest.places.length > 3 && (
+                      <span className="text-[10px] px-1.5 py-0.5 text-stone-500 font-mono-num">
+                        +{dest.places.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono-num text-stone-400">
                   <span>{dest.weather}</span>

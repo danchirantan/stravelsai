@@ -9,23 +9,36 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { MOCK_RESTAURANTS } from '../../data/mockData';
+import { Trip } from '../../types/travel';
 
 interface RestaurantDiscoveryProps {
+  trip?: Trip;
   theme: 'dark' | 'light';
   currency: string;
 }
 
 export const RestaurantDiscovery: React.FC<RestaurantDiscoveryProps> = ({
+  trip,
   theme,
   currency,
 }) => {
   const isDark = theme === 'dark';
-  const [selectedCity, setSelectedCity] = useState<'All' | 'Jaipur' | 'Jodhpur' | 'Jaisalmer' | 'Udaipur'>('All');
+  const [selectedCity, setSelectedCity] = useState<string>('All');
+
+  // Dynamically derive cities from all mock restaurants plus active trip destinations
+  const allCities = Array.from(
+    new Set([
+      ...(trip?.destinations || []),
+      ...MOCK_RESTAURANTS.map((r) => r.city),
+    ])
+  );
 
   const filteredRestaurants = MOCK_RESTAURANTS.filter((r) => {
     if (selectedCity === 'All') return true;
-    return r.city === selectedCity;
+    return r.city.toLowerCase().includes(selectedCity.toLowerCase()) || selectedCity.toLowerCase().includes(r.city.toLowerCase());
   });
+
+  const tripRegionName = trip?.title.split('—')[0].trim() || 'Regional';
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
@@ -36,16 +49,16 @@ export const RestaurantDiscovery: React.FC<RestaurantDiscoveryProps> = ({
           <span>GASTRONOMIC INTELLIGENCE</span>
         </div>
         <h1 className="font-editorial text-3xl md:text-5xl font-bold tracking-tight">
-          Curated Dining & Royal Rajasthani Feasts
+          Curated Dining & {tripRegionName} Feasts
         </h1>
         <p className="text-xs md:text-sm text-stone-400 font-sans-ui max-w-2xl">
-          Historic fort-top dining, rooftop haveli terraces, royal thalis, and centuries-old culinary institutions coordinated around your day's journey.
+          Historic waterfront terraces, rooftop palace dining, traditional thalis, and centuries-old culinary institutions coordinated around your day's journey.
         </p>
       </div>
 
       {/* City Filters */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-3 overflow-x-auto">
-        {(['All', 'Jaipur', 'Jodhpur', 'Jaisalmer', 'Udaipur'] as const).map((city) => (
+        {['All', ...allCities].map((city) => (
           <button
             key={city}
             onClick={() => setSelectedCity(city)}

@@ -47,8 +47,8 @@ export const Header: React.FC<HeaderProps> = ({
   openNotifications,
   unreadNotificationsCount,
   hasWeatherDisruption,
-  tripTitle = 'Rajasthan — The Royal Journey',
-  tripSubtitle = 'Delhi → Jaipur → Jodhpur → Jaisalmer → Udaipur',
+  tripTitle = 'Active Journey',
+  tripSubtitle = 'Curated Itinerary',
   sourceCity = 'New Delhi / NCR',
   startDate = '2026-10-15',
   endDate = '2026-10-21',
@@ -167,7 +167,7 @@ export const Header: React.FC<HeaderProps> = ({
         title="Click to view and adjust Origin City, Dates, Trains & Flights"
       >
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="font-semibold">{sourceCity.split('/')[0].trim()} → Rajasthan</span>
+        <span className="font-semibold">{sourceCity.split('/')[0].trim()} → {tripTitle.split('—')[0].trim()}</span>
         <span className="opacity-40">|</span>
         <span>{startDate} – {endDate}</span>
       </button>

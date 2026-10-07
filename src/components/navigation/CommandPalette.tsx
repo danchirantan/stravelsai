@@ -72,7 +72,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
     },
     {
-      title: 'View Active Timeline Itinerary (Rajasthan)',
+      title: 'View Active Timeline Itinerary',
       category: 'Navigation',
       icon: Calendar,
       action: () => {

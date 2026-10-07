@@ -30,63 +30,215 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
   const [activeCategory, setActiveCategory] = useState<'All' | 'Nearby' | 'Detour' | 'Budget'>('All');
   const [addedItems, setAddedItems] = useState<string[]>([]);
 
-  const recommendations = [
-    {
-      id: 'rec-1',
-      title: 'Anokhi Museum of Hand Printing & Master Block Artisan Session',
-      city: 'Jaipur (Amer Foothills)',
-      category: 'Culture',
-      tag: 'Hidden Gems Nearby',
-      cost: 450,
-      timing: '1h 15m · 8 min from Amer Fort',
-      imageUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=600&auto=format&fit=crop',
-      aiReason: 'You noted an interest in authentic textiles and craftsmanship. Housed in a restored haveli at the base of Amer Fort, master printers demonstrate ancient natural vegetable dye block-printing techniques with almost zero tourist crowds.',
-    },
-    {
-      id: 'rec-2',
-      title: 'Rao Jodha Desert Rock Park Guided Sunset Geological Walk',
-      city: 'Jodhpur (Mehrangarh Foothills)',
-      category: 'Culture',
-      tag: 'Because You Like Photography & Craft',
-      cost: 800,
-      timing: '1h 30m · Steps from Singhoria Gate',
-      imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop',
-      aiReason: 'Ecologically restored 70-hectare volcanic rock sanctuary. Native desert plants, ancient welded tuff rocks, and the single most dramatic camera angle looking straight up at Mehrangarh Fort battlements.',
-    },
-    {
-      id: 'rec-3',
-      title: 'Kuldhara Abandoned Ghost Village & Stargazing Detour',
-      city: 'Jaisalmer (Thar Desert Outpost)',
-      category: 'Sightseeing',
-      tag: 'Worth the Detour',
-      cost: 1200,
-      timing: '1h 45m · On the scenic road to Sam Sand Dunes',
-      imageUrl: 'https://images.unsplash.com/photo-1509233725247-49e657c54213?q=80&w=600&auto=format&fit=crop',
-      aiReason: 'Since Day 4 takes you towards the Sam Sand Dunes, stopping at the 13th-century deserted Paliwal Brahmin village adds only 15 minutes of driving while granting an eerie, sublime golden hour photography walkthrough.',
-    },
-    {
-      id: 'rec-4',
-      title: 'Dharohar Evening Folk Dance & Puppet Performance at Bagore Ki Haveli',
-      city: 'Udaipur (Gangaur Ghat Waterfront)',
-      category: 'Culture',
-      tag: 'Perfect for Tonight',
-      cost: 350,
-      timing: '19:00 – 20:00 · Gangaur Ghat',
-      imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=600&auto=format&fit=crop',
-      aiReason: 'Celebrated cultural performance within the 18th-century Neem Chowk courtyard of Bagore Ki Haveli, featuring traditional Chari, Ghoomar, and fire dances right on the lake edge.',
-    },
-    {
-      id: 'rec-5',
-      title: 'Sunrise Hot-Air Balloon Float over Amer Fort & Aravalli Ranges',
-      city: 'Jaipur (Amber Valley)',
-      category: 'Sightseeing',
-      tag: 'Under Your Budget',
-      cost: 8500,
-      timing: '2h excursion at 05:45 AM sunrise',
-      imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=600&auto=format&fit=crop',
-      aiReason: 'Peaceful bird-eye perspective floating over the fortified crests of Jaigarh and Nahargarh as morning light breaks across the Rajasthan desert horizon.',
-    },
-  ];
+  const tripTitleLower = trip.title.toLowerCase();
+  const destsLower = trip.destinations.map((d) => d.toLowerCase());
+
+  const isKerala = tripTitleLower.includes('kerala') || destsLower.some((d) => d.includes('kochi') || d.includes('munnar') || d.includes('alleppey'));
+  const isLadakh = tripTitleLower.includes('ladakh') || destsLower.some((d) => d.includes('leh') || d.includes('nubra') || d.includes('pangong'));
+  const isGoa = tripTitleLower.includes('goa') || destsLower.some((d) => d.includes('panaji') || d.includes('palolem') || d.includes('vagator'));
+  const isVaranasi = tripTitleLower.includes('varanasi') || destsLower.some((d) => d.includes('kashi') || d.includes('sarnath'));
+
+  const recommendations = React.useMemo(() => {
+    if (isKerala) {
+      return [
+        {
+          id: 'rec-ker-1',
+          title: 'Kolukkumalai High-Altitude Tea Estate & Sunrise Cloud Walk',
+          city: 'Munnar (Western Ghats)',
+          category: 'Nature',
+          tag: 'Hidden Gems Nearby',
+          cost: 1600,
+          timing: '2h 30m excursion',
+          imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'World’s highest organic tea plantation at 7,900 ft, featuring authentic orthodox leaf manufacturing and sweeping views over Tamil Nadu plains.',
+        },
+        {
+          id: 'rec-ker-2',
+          title: 'Kumarakom Bird Sanctuary Backwater Canoe Glide',
+          city: 'Kumarakom (Vembanad Lake)',
+          category: 'Nature',
+          tag: 'Worth the Detour',
+          cost: 650,
+          timing: '1h 45m · On Vembanad canals',
+          imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Quiet morning paddle spotting kingfishers, egrets, and cormorants along lush canal mangroves.',
+        },
+        {
+          id: 'rec-ker-3',
+          title: 'Authentic Kalaripayattu Martial Arts & Kathakali Mask Show',
+          city: 'Fort Kochi',
+          category: 'Culture',
+          tag: 'Perfect for Tonight',
+          cost: 1200,
+          timing: '19:00 – 20:30',
+          imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Ancient warrior traditions of Kerala performed with swords, shields, and acrobatic jumps inside a teakwood amphitheater.',
+        },
+        {
+          id: 'rec-ker-4',
+          title: 'Ayurvedic Botanical Herbal Garden Masterclass',
+          city: 'Thekkady (Spice Belt)',
+          category: 'Culture',
+          tag: 'Under Your Budget',
+          cost: 500,
+          timing: '1h 15m walk',
+          imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Guided tour identifying live cardamom, cinnamon bark, and vanilla orchids with fresh spice tastings.',
+        },
+      ];
+    }
+
+    if (isLadakh) {
+      return [
+        {
+          id: 'rec-lad-1',
+          title: 'Hemis 17th-Century Royal Gompa & Sacred Relic Museum',
+          city: 'Hemis, Ladakh',
+          category: 'Culture',
+          tag: 'Hidden Gems Nearby',
+          cost: 400,
+          timing: '2h excursion',
+          imageUrl: 'https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Wealthiest monastery in Ladakh tucked inside a dramatic Indus river canyon with golden statues and silk thangkas.',
+        },
+        {
+          id: 'rec-lad-2',
+          title: 'Bactrian Double-Humped Camel Safari at Hunder White Dunes',
+          city: 'Nubra Valley',
+          category: 'Sightseeing',
+          tag: 'Worth the Detour',
+          cost: 1500,
+          timing: '1h 30m at sunset',
+          imageUrl: 'https://images.unsplash.com/photo-1509233725247-49e657c54213?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Ancient Silk Route camel safari across cold desert white sand dunes with snowcapped Karakoram backdrop.',
+        },
+        {
+          id: 'rec-lad-3',
+          title: 'Stargazing Milky Way Session at High-Altitude Pangong Basin',
+          city: 'Pangong Tso',
+          category: 'Nature',
+          tag: 'Perfect for Tonight',
+          cost: 800,
+          timing: '21:00 – 23:00',
+          imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Crystal-clear 14,000-ft night sky revealing dramatic galactic core arms without light pollution.',
+        },
+      ];
+    }
+
+    if (isGoa) {
+      return [
+        {
+          id: 'rec-goa-1',
+          title: 'Dudhsagar 4-Tier Waterfalls & Jeep Safari Trek',
+          city: 'Sonaulim, South Goa',
+          category: 'Nature',
+          tag: 'Worth the Detour',
+          cost: 1800,
+          timing: '4h excursion',
+          imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Witness the thunderous Sea of Milk waterfall roaring down Western Ghats cliffs inside Bhagwan Mahaveer Sanctuary.',
+        },
+        {
+          id: 'rec-goa-2',
+          title: 'Fontainhas Architectural Latin Quarter Heritage Walk',
+          city: 'Panaji',
+          category: 'Culture',
+          tag: 'Hidden Gems Nearby',
+          cost: 600,
+          timing: '1h 30m walk',
+          imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Centuries-old Portuguese villas painted in pastel yellow, terracotta, and olive green with handcrafted azulejo ceramic tiles.',
+        },
+      ];
+    }
+
+    if (isVaranasi) {
+      return [
+        {
+          id: 'rec-var-1',
+          title: 'Subah-e-Banaras Dawn Classical Music & Ragas at Assi Ghat',
+          city: 'Varanasi',
+          category: 'Culture',
+          tag: 'Perfect for Tomorrow Morning',
+          cost: 0,
+          timing: '05:30 – 07:00 AM',
+          imageUrl: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Experience live sitar, shehnai, and morning Vedic chants along the sacred river steps as the sun rises over the horizon.',
+        },
+        {
+          id: 'rec-var-2',
+          title: 'Sarnath Deer Park & Ashokan Lion Capital Museum',
+          city: 'Sarnath',
+          category: 'Culture',
+          tag: 'Worth the Detour',
+          cost: 400,
+          timing: '2h 30m excursion',
+          imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=600&auto=format&fit=crop',
+          aiReason: 'Ancient Buddhist pilgrimage ground where the Buddha delivered his first sermon in 528 BCE.',
+        },
+      ];
+    }
+
+    // Default / Rajasthan recommendations
+    return [
+      {
+        id: 'rec-1',
+        title: 'Anokhi Museum of Hand Printing & Master Block Artisan Session',
+        city: 'Jaipur (Amer Foothills)',
+        category: 'Culture',
+        tag: 'Hidden Gems Nearby',
+        cost: 450,
+        timing: '1h 15m · 8 min from Amer Fort',
+        imageUrl: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=600&auto=format&fit=crop',
+        aiReason: 'Authentic textiles and craftsmanship in a restored haveli at the base of Amer Fort.',
+      },
+      {
+        id: 'rec-2',
+        title: 'Rao Jodha Desert Rock Park Guided Sunset Geological Walk',
+        city: 'Jodhpur (Mehrangarh Foothills)',
+        category: 'Culture',
+        tag: 'Because You Like Photography & Craft',
+        cost: 800,
+        timing: '1h 30m · Steps from Singhoria Gate',
+        imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop',
+        aiReason: 'Ecologically restored 70-hectare volcanic rock sanctuary beneath Mehrangarh Fort battlements.',
+      },
+      {
+        id: 'rec-3',
+        title: 'Kuldhara Abandoned Ghost Village & Stargazing Detour',
+        city: 'Jaisalmer (Thar Desert Outpost)',
+        category: 'Sightseeing',
+        tag: 'Worth the Detour',
+        cost: 1200,
+        timing: '1h 45m · Road to Sam Sand Dunes',
+        imageUrl: 'https://images.unsplash.com/photo-1509233725247-49e657c54213?q=80&w=600&auto=format&fit=crop',
+        aiReason: '13th-century deserted Paliwal Brahmin village with eerie, sublime golden hour photography walkthrough.',
+      },
+      {
+        id: 'rec-4',
+        title: 'Dharohar Evening Folk Dance & Puppet Performance at Bagore Ki Haveli',
+        city: 'Udaipur (Gangaur Ghat Waterfront)',
+        category: 'Culture',
+        tag: 'Perfect for Tonight',
+        cost: 350,
+        timing: '19:00 – 20:00 · Gangaur Ghat',
+        imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=600&auto=format&fit=crop',
+        aiReason: 'Traditional folk dance within the 18th-century Neem Chowk courtyard right on the lake edge.',
+      },
+      {
+        id: 'rec-5',
+        title: 'Sunrise Hot-Air Balloon Float over Amer Fort & Aravalli Ranges',
+        city: 'Jaipur (Amber Valley)',
+        category: 'Sightseeing',
+        tag: 'Under Your Budget',
+        cost: 8500,
+        timing: '2h excursion at 05:45 AM sunrise',
+        imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=600&auto=format&fit=crop',
+        aiReason: 'Peaceful bird-eye perspective floating over fortified crests as morning light breaks across the horizon.',
+      },
+    ];
+  }, [isKerala, isLadakh, isGoa, isVaranasi]);
 
   const handleAdd = (item: typeof recommendations[0]) => {
     setAddedItems((prev) => [...prev, item.id]);

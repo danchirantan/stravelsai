@@ -39,6 +39,8 @@ interface ItineraryViewProps {
   onVoteSuggestion: (id: string, direction: 'up' | 'down') => void;
   onAcceptSuggestion: (id: string) => void;
   onProposeSuggestion: (item: Omit<SuggestedItineraryItem, 'id' | 'upvotes' | 'downvotes' | 'userVote' | 'companionVotes' | 'status'>) => void;
+  selectedDayNumber?: number;
+  onSelectDayNumber?: (day: number) => void;
 }
 
 export const ItineraryView: React.FC<ItineraryViewProps> = ({
@@ -54,9 +56,16 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({
   onVoteSuggestion,
   onAcceptSuggestion,
   onProposeSuggestion,
+  selectedDayNumber: controlledDayNumber,
+  onSelectDayNumber,
 }) => {
   const isDark = theme === 'dark';
-  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(3);
+  const [internalDayNumber, setInternalDayNumber] = useState<number>(3);
+  const selectedDayNumber = controlledDayNumber !== undefined ? controlledDayNumber : internalDayNumber;
+  const setSelectedDayNumber = (num: number) => {
+    setInternalDayNumber(num);
+    if (onSelectDayNumber) onSelectDayNumber(num);
+  };
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>('act-3-4');
   const [conflictPrompt, setConflictPrompt] = useState<{
     show: boolean;

@@ -19,7 +19,9 @@ export type ActivityCategory =
   | 'Shopping'
   | 'Nightlife'
   | 'Nature'
-  | 'Adventure';
+  | 'Adventure'
+  | 'Photography'
+  | 'Hotels';
 
 export interface CompanionVote {
   companionId: string;
@@ -112,6 +114,24 @@ export interface Trip {
   days: ItineraryDay[];
 }
 
+export interface DestinationPlace {
+  id: string;
+  name: string;
+  city: string;
+  category: 'Palace' | 'Fort' | 'Temple' | 'Nature' | 'Market' | 'Viewpoint' | 'Heritage' | 'Experience' | 'Coast';
+  tagline: string;
+  description: string;
+  imageUrl: string;
+  recommendedDuration: string;
+  bestTimeOfDay: 'Morning' | 'Afternoon' | 'Sunset' | 'Evening' | 'Full Day';
+  entryFee: string;
+  rating: number;
+  reviewsCount: number;
+  highlight: string;
+  curatorTip?: string;
+  coordinates: { lat: number; lng: number };
+}
+
 export interface Destination {
   id: string;
   name: string;
@@ -127,6 +147,7 @@ export interface Destination {
   highlights: string[];
   imageUrl: string;
   coordinates: { lat: number; lng: number };
+  places?: DestinationPlace[];
 }
 
 export interface Hotel {
@@ -137,7 +158,18 @@ export interface Hotel {
   reviewsCount: number;
   pricePerNight: number;
   currency: string;
-  style: 'Heritage Palace' | 'Royal Haveli' | 'Desert Luxury Camp' | 'Lakeside Sanctuary' | 'Boutique Luxury' | 'Contemporary Sanctuary' | 'Design Hotel';
+  style:
+    | 'Heritage Palace'
+    | 'Royal Haveli'
+    | 'Desert Luxury Camp'
+    | 'Lakeside Sanctuary'
+    | 'Boutique Luxury'
+    | 'Contemporary Sanctuary'
+    | 'Design Hotel'
+    | 'Colonial Harbour Villa'
+    | 'High-Altitude Luxury Sanctuary'
+    | 'Seaside Portuguese Estate'
+    | 'Sacred Riverfront Palace';
   amenities: string[];
   aiReason: string;
   imageUrl: string;
@@ -169,6 +201,7 @@ export interface Expense {
   paidBy: string;
   date: string;
   status: 'Estimated' | 'Actual';
+  city?: string;
 }
 
 export interface Booking {
@@ -286,6 +319,18 @@ export interface TripMemory {
   locationsCount: number;
   highlights: string[];
   imageUrl: string;
+  geoTag?: {
+    destination: string;
+    city: string;
+    coordinates: { lat: number; lng: number };
+    timestamp: string;
+    timeString: string;
+    dayTheme?: string;
+    weather?: string;
+    altitude?: string;
+    deviceLens?: string;
+  };
+  capturedViaCamera?: boolean;
 }
 
 export type IndiaTravelCategory =

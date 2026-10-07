@@ -30,10 +30,13 @@ import { ShareModal } from './components/sharing/ShareModal';
 import { NotificationModal } from './components/notifications/NotificationModal';
 import { ExploreIndiaView } from './components/india/ExploreIndiaView';
 import { AiCreativeStudioModal } from './components/media/AiCreativeStudioModal';
+import { TripSummariesModule } from './components/summaries/TripSummariesModule';
+import { TripGlobalProgressBar } from './components/navigation/TripGlobalProgressBar';
 import { DEMO_TRIP, MOCK_DESTINATIONS, MOCK_NOTIFICATIONS, MOCK_SUGGESTED_ITEMS, MOCK_BOOKINGS } from './data/mockData';
 import { RAJASTHAN_DEMO_TRIP } from './data/rajasthanTrip';
 import { RAJASTHAN_SUGGESTED_ITEMS } from './data/rajasthanSuggestions';
-import { Trip, NotificationItem, SuggestedItineraryItem, Activity, DestinationWeather, WeatherDisruptionAlert, IndianCircuit, Booking } from './types/travel';
+import { getTripForDestination } from './data/multiDestinationsTrips';
+import { Trip, NotificationItem, SuggestedItineraryItem, Activity, DestinationWeather, WeatherDisruptionAlert, IndianCircuit, Booking, DestinationPlace } from './types/travel';
 import { WeatherClient } from './services/weatherClient';
 import {
   auth,
@@ -47,6 +50,8 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [trip, setTrip] = useState<Trip>(RAJASTHAN_DEMO_TRIP);
+  const [completedDaysCount, setCompletedDaysCount] = useState<number>(2);
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(3);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [currency, setCurrency] = useState<string>('INR');
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -294,15 +299,22 @@ export default function App() {
     setIsPlannerModalOpen(true);
   };
 
+  const handleSwitchToDestination = (destName: string) => {
+    const { trip: selectedTrip, suggestedItems: matchedSuggestions } = getTripForDestination(destName);
+    setTrip(selectedTrip);
+    setSuggestedItems(matchedSuggestions);
+    setCompletedDaysCount(Math.min(2, Math.floor(selectedTrip.daysCount / 2)));
+    setSelectedDayNumber(1);
+    setActiveTab('itinerary');
+  };
+
   const handleSelectCircuitForPlanning = (circuit: IndianCircuit) => {
-    if (circuit.id === 'circuit-rajasthan-royal') {
-      setTrip(RAJASTHAN_DEMO_TRIP);
-      setSuggestedItems(RAJASTHAN_SUGGESTED_ITEMS);
-      setActiveTab('itinerary');
-    } else {
-      setPlannerInitialDestination(circuit.title);
-      setIsPlannerModalOpen(true);
-    }
+    const { trip: selectedTrip, suggestedItems: matchedSuggestions } = getTripForDestination(circuit.title);
+    setTrip(selectedTrip);
+    setSuggestedItems(matchedSuggestions);
+    setCompletedDaysCount(Math.min(2, Math.floor(selectedTrip.daysCount / 2)));
+    setSelectedDayNumber(1);
+    setActiveTab('itinerary');
   };
 
   const handleAddRecommendationToItinerary = (title: string, category: string, cost: number) => {
@@ -328,6 +340,55 @@ export default function App() {
       d.dayNumber === 3 ? { ...d, activities: [...d.activities, newAct] } : d
     );
     setTrip({ ...trip, days: updatedDays });
+  };
+
+  const handleAddPlaceToItinerary = (place: DestinationPlace) => {
+    // Find matching day in the trip or use currently selected day
+    const matchingDay =
+      trip.days.find((d) => d.city.toLowerCase().includes(place.city.toLowerCase()) || place.city.toLowerCase().includes(d.city.toLowerCase())) ||
+      trip.days.find((d) => d.dayNumber === selectedDayNumber) ||
+      trip.days[0];
+
+    const targetDayNumber = matchingDay ? matchingDay.dayNumber : 1;
+    const numericCost = parseInt(place.entryFee.replace(/[^0-9]/g, '')) || 250;
+
+    const newAct: Activity = {
+      id: `act-pl-${Date.now()}`,
+      time: place.bestTimeOfDay === 'Morning' ? '09:30' : place.bestTimeOfDay === 'Sunset' ? '17:00' : place.bestTimeOfDay === 'Evening' ? '19:30' : '14:30',
+      title: `${place.name}`,
+      category: (place.category === 'Palace' || place.category === 'Fort' || place.category === 'Temple' || place.category === 'Heritage') ? 'Culture' : place.category === 'Nature' ? 'Nature' : 'Sightseeing',
+      duration: place.recommendedDuration,
+      cost: numericCost,
+      currency,
+      location: `${place.name}, ${place.city}`,
+      coordinates: place.coordinates,
+      reservationStatus: 'Recommended',
+      aiReason: place.curatorTip || place.highlight || `Curated must-visit landmark in ${place.city}.`,
+      upvotes: 4,
+      downvotes: 0,
+      userVote: 'up',
+      imageUrl: place.imageUrl,
+    };
+
+    const updatedDays = trip.days.map((d) =>
+      d.dayNumber === targetDayNumber ? { ...d, activities: [...d.activities, newAct] } : d
+    );
+
+    const updatedDests = trip.destinations.some((d) => d.toLowerCase().includes(place.city.toLowerCase()))
+      ? trip.destinations
+      : [...trip.destinations, place.city];
+
+    setTrip({ ...trip, days: updatedDays, destinations: updatedDests });
+
+    const newNotification: NotificationItem = {
+      id: `notif-pl-${Date.now()}`,
+      type: 'Optimization',
+      title: `Added "${place.name}" to Itinerary`,
+      message: `Integrated into Day ${targetDayNumber} (${matchingDay?.city || place.city}). Duration: ${place.recommendedDuration}.`,
+      timestamp: 'Just now',
+      read: false,
+    };
+    setNotifications((prev) => [newNotification, ...prev]);
   };
 
   // Companion Voting Handler
@@ -562,6 +623,16 @@ export default function App() {
           onMobileMenuToggle={() => setIsMobileMenuOpen(true)}
         />
 
+        {/* Global Progress Bar at the top of the main content area */}
+        <TripGlobalProgressBar
+          trip={trip}
+          completedDays={completedDaysCount}
+          onUpdateCompletedDays={setCompletedDaysCount}
+          onSelectDay={(dayNum) => setSelectedDayNumber(dayNum)}
+          setActiveTab={setActiveTab}
+          theme={theme}
+        />
+
         {/* View Router */}
         <main className="flex-1">
           {activeTab === 'home' && (
@@ -595,6 +666,8 @@ export default function App() {
               onVoteSuggestion={handleVoteSuggestion}
               onAcceptSuggestion={handleAcceptSuggestion}
               onProposeSuggestion={handleProposeSuggestion}
+              selectedDayNumber={selectedDayNumber}
+              onSelectDayNumber={setSelectedDayNumber}
             />
           )}
 
@@ -623,17 +696,35 @@ export default function App() {
           {activeTab === 'destinations' && (
             <DestinationExplorer
               onSelectDestinationForPlanning={handleSelectDestinationForPlanning}
+              onAddDestinationToTrip={(destName) => {
+                if (!trip.destinations.includes(destName)) {
+                  const updated = { ...trip, destinations: [...trip.destinations, destName] };
+                  handleUpdateTrip(updated);
+                }
+              }}
+              onAddPlaceToItinerary={handleAddPlaceToItinerary}
+              currentTripDestinations={trip.destinations}
+              onSwitchActiveTripToDestination={handleSwitchToDestination}
               theme={theme}
               currency={currency}
             />
           )}
 
+          {activeTab === 'summaries' && (
+            <TripSummariesModule
+              trip={trip}
+              theme={theme}
+              currency={currency}
+              onOpenCreativeStudio={() => setIsCreativeStudioOpen(true)}
+            />
+          )}
+
           {activeTab === 'hotels' && (
-            <HotelDiscovery theme={theme} currency={currency} />
+            <HotelDiscovery trip={trip} theme={theme} currency={currency} />
           )}
 
           {activeTab === 'restaurants' && (
-            <RestaurantDiscovery theme={theme} currency={currency} />
+            <RestaurantDiscovery trip={trip} theme={theme} currency={currency} />
           )}
 
           {activeTab === 'budget' && (
@@ -688,7 +779,7 @@ export default function App() {
           )}
 
           {activeTab === 'memories' && (
-            <MemoriesView theme={theme} currency={currency} />
+            <MemoriesView trip={trip} theme={theme} currency={currency} />
           )}
 
           {activeTab === 'profile' && (

@@ -3,8 +3,8 @@ import { Trip } from '../types/travel';
 export const RAJASTHAN_DEMO_TRIP: Trip = {
   id: 'trip-rajasthan-royal-2026',
   title: 'RAJASTHAN — THE ROYAL JOURNEY',
-  subtitle: 'Delhi → Jaipur → Jodhpur → Jaisalmer → Udaipur',
-  destinations: ['Jaipur', 'Jodhpur', 'Jaisalmer', 'Udaipur'],
+  subtitle: 'Delhi → Jaipur → Pushkar → Jodhpur → Jaisalmer → Udaipur',
+  destinations: ['Jaipur', 'Pushkar', 'Jodhpur', 'Jaisalmer', 'Udaipur'],
   startDate: '2026-11-08',
   endDate: '2026-11-14',
   daysCount: 7,

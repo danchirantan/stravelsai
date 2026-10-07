@@ -18,6 +18,7 @@ import {
 import { TravelStyle, Trip } from '../../types/travel';
 import { ALL_INDIA_DESTINATIONS } from '../../data/indiaAllDestinations';
 import { RAJASTHAN_DEMO_TRIP } from '../../data/rajasthanTrip';
+import { getTripForDestination } from '../../data/multiDestinationsTrips';
 
 interface AiPlannerModalProps {
   isOpen: boolean;
@@ -133,12 +134,21 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
 
     let generatedTrip: Trip;
 
-    if (destLower.includes('rajasthan')) {
-      // Use the rich Rajasthan blueprint customized to duration and budget
+    const presetResult = getTripForDestination(destination);
+    const isKnownRegion =
+      destLower.includes('kerala') ||
+      destLower.includes('ladakh') ||
+      destLower.includes('goa') ||
+      destLower.includes('varanasi') ||
+      destLower.includes('himachal') ||
+      destLower.includes('rajasthan');
+
+    if (isKnownRegion && presetResult?.trip) {
+      const baseTrip = presetResult.trip;
       generatedTrip = {
-        ...RAJASTHAN_DEMO_TRIP,
-        id: `trip-india-${Date.now()}`,
-        title: `RAJASTHAN — BESPOKE ${durationDays}-DAY ROYAL JOURNEY`,
+        ...baseTrip,
+        id: `trip-gen-${Date.now()}`,
+        title: `${baseTrip.title} (${durationDays} DAYS)`,
         subtitle: `Curated for ${travelers} travelers · ${pace} Pace · Budget: ₹${budget.toLocaleString('en-IN')}`,
         daysCount: durationDays,
         travelersCount: travelers,
@@ -147,7 +157,7 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
         currency: 'INR',
         travelStyle: selectedStyles,
         pace: pace,
-        days: RAJASTHAN_DEMO_TRIP.days.slice(0, Math.min(durationDays, RAJASTHAN_DEMO_TRIP.days.length)).map((day, idx) => ({
+        days: baseTrip.days.slice(0, Math.min(durationDays, baseTrip.days.length)).map((day, idx) => ({
           ...day,
           dayNumber: idx + 1,
           date: `Day 0${idx + 1}`,

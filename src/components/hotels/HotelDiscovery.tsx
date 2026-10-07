@@ -11,20 +11,25 @@ import {
   Bookmark
 } from 'lucide-react';
 import { MOCK_HOTELS } from '../../data/mockData';
-import { Hotel } from '../../types/travel';
+import { Hotel, Trip } from '../../types/travel';
 
 interface HotelDiscoveryProps {
+  trip?: Trip;
   theme: 'dark' | 'light';
   currency: string;
 }
 
 export const HotelDiscovery: React.FC<HotelDiscoveryProps> = ({
+  trip,
   theme,
   currency,
 }) => {
   const isDark = theme === 'dark';
   const [selectedStyle, setSelectedStyle] = useState<string>('All');
   const [savedHotelIds, setSavedHotelIds] = useState<string[]>(['hotel-1']);
+
+  // Extract all unique styles dynamically from MOCK_HOTELS
+  const allStyles = ['All', ...Array.from(new Set(MOCK_HOTELS.map((h) => h.style)))];
 
   const filteredHotels = MOCK_HOTELS.filter((h) => {
     if (selectedStyle === 'All') return true;
@@ -37,41 +42,41 @@ export const HotelDiscovery: React.FC<HotelDiscoveryProps> = ({
     );
   };
 
+  const tripRegionName = trip?.title.split('—')[0].trim() || 'Curated';
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-xs font-mono-num text-emerald-400">
           <Building className="w-4 h-4 text-emerald-400" />
-          <span>CURATED HERITAGE PALACES & HAVELIS</span>
+          <span>CURATED HERITAGE STAYS & BOUTIQUE RETREATS</span>
         </div>
         <h1 className="font-editorial text-3xl md:text-5xl font-bold tracking-tight">
-          Palaces, Havelis & Desert Sanctuaries
+          {tripRegionName} Stays, Villas & Sanctuaries
         </h1>
         <p className="text-xs md:text-sm text-stone-400 font-sans-ui max-w-2xl">
-          Every royal palace, desert luxury camp, and boutique haveli is vetted for architectural provenance, quiet courtyard fountains, and proximity to Rajasthan's historic hill forts.
+          Every palace, waterfront villa, high-altitude sanctuary, and boutique haveli is vetted for architectural provenance, quiet courtyard gardens, and serene hospitality.
         </p>
       </div>
 
       {/* Style Filters */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-3 overflow-x-auto">
-        {['All', 'Heritage Palace', 'Royal Haveli', 'Desert Luxury Camp', 'Lakeside Sanctuary'].map(
-          (style) => (
-            <button
-              key={style}
-              onClick={() => setSelectedStyle(style)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                selectedStyle === style
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                  : isDark
-                  ? 'text-stone-400 hover:text-white hover:bg-white/5'
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-              }`}
-            >
-              {style}
-            </button>
-          )
-        )}
+        {allStyles.map((style) => (
+          <button
+            key={style}
+            onClick={() => setSelectedStyle(style)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              selectedStyle === style
+                ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                : isDark
+                ? 'text-stone-400 hover:text-white hover:bg-white/5'
+                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+            }`}
+          >
+            {style}
+          </button>
+        ))}
       </div>
 
       {/* Hotel Cards Grid */}

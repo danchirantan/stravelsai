@@ -134,9 +134,10 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         {/* Alerts List */}
         <div className="max-h-[62vh] overflow-y-auto divide-y divide-white/5 p-2">
           {filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notif) => {
+            filteredNotifications.map((notif, idx) => {
               const isWeather = notif.category === 'Weather';
               const alert = notif.weatherAlert;
+              const staggerDelay = `${Math.min(idx * 45, 350)}ms`;
 
               if (isWeather && alert) {
                 // High-priority Weather Disruption Card
@@ -144,7 +145,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 return (
                   <div
                     key={notif.id}
-                    className={`p-4 md:p-5 rounded-xl m-2 border transition-all space-y-3 ${
+                    style={{ animationDelay: staggerDelay }}
+                    className={`p-4 md:p-5 rounded-xl m-2 border transition-all space-y-3 animate-notif-enter ${
                       isCritical
                         ? 'bg-rose-950/20 border-rose-500/40 text-stone-200'
                         : 'bg-amber-950/20 border-amber-500/40 text-stone-200'
@@ -243,7 +245,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               return (
                 <div
                   key={notif.id}
-                  className={`p-4 px-6 space-y-1 transition-colors ${
+                  style={{ animationDelay: staggerDelay }}
+                  className={`p-4 px-6 space-y-1 transition-colors animate-notif-enter ${
                     !notif.read ? (isDark ? 'bg-white/5' : 'bg-stone-50') : ''
                   }`}
                 >

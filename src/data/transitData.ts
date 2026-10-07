@@ -133,12 +133,188 @@ export function getDateWeatherEstimations(
  * Returns tailored flight choices from chosen source city to destination
  */
 export function getFlightsForRoute(sourceCityName: string, destinationName: string): FlightOption[] {
-  const isDelhi = sourceCityName.toLowerCase().includes('delhi');
-  const isMumbai = sourceCityName.toLowerCase().includes('mumbai');
-  const isBengaluru = sourceCityName.toLowerCase().includes('bengaluru') || sourceCityName.toLowerCase().includes('bangalore');
-  const isKolkata = sourceCityName.toLowerCase().includes('kolkata');
+  const src = sourceCityName.toLowerCase();
+  const dest = destinationName.toLowerCase();
+
+  const isDelhi = src.includes('delhi');
+  const isMumbai = src.includes('mumbai');
+  const isBengaluru = src.includes('bengaluru') || src.includes('bangalore');
+  const isKolkata = src.includes('kolkata');
+  const isHyderabad = src.includes('hyderabad');
+  const isAhmedabad = src.includes('ahmedabad');
+
+  const destIsJodhpur = dest.includes('jodhpur');
+  const destIsUdaipur = dest.includes('udaipur');
+  const destIsJaisalmer = dest.includes('jaisalmer');
+  const destIsJaipur = dest.includes('jaipur') || (!destIsJodhpur && !destIsUdaipur && !destIsJaisalmer);
+
+  // Determine destination airport metadata
+  const destAirport = destIsUdaipur
+    ? { name: 'Maharana Pratap Airport Udaipur (UDR)', code: 'UDR', city: 'Udaipur' }
+    : destIsJodhpur
+    ? { name: 'Jodhpur Civil Airport (JDH)', code: 'JDH', city: 'Jodhpur' }
+    : destIsJaisalmer
+    ? { name: 'Jaisalmer Airport (JSA)', code: 'JSA', city: 'Jaisalmer' }
+    : { name: 'Jaipur International Airport T2 (JAI)', code: 'JAI', city: 'Jaipur' };
+
+  // Intercity routes (e.g. Jaipur -> Jodhpur or Udaipur)
+  if (src.includes('jaipur') || src.includes('jodhpur') || src.includes('udaipur')) {
+    return [
+      {
+        id: `fl-inter-${Date.now()}-1`,
+        airline: 'IndiGo Shuttle',
+        flightNumber: '6E 7182',
+        logo: '✈️',
+        departureAirport: `${sourceCityName} Airport`,
+        departureCode: src.includes('jaipur') ? 'JAI' : src.includes('jodhpur') ? 'JDH' : 'UDR',
+        departureTime: '11:10',
+        arrivalAirport: destAirport.name,
+        arrivalCode: destAirport.code,
+        arrivalTime: '12:05',
+        duration: '0h 55m',
+        nonStop: true,
+        pricePerSeat: 2950,
+        currency: 'INR',
+        cabinClass: 'Economy',
+        baggage: '15 kg check-in · 7 kg cabin',
+        punctualityScore: '95% On-Time',
+        carbonKg: 28,
+      },
+      {
+        id: `fl-inter-${Date.now()}-2`,
+        airline: 'SpiceJet Heritage Hopper',
+        flightNumber: 'SG 2981',
+        logo: '🛩️',
+        departureAirport: `${sourceCityName} Airport`,
+        departureCode: src.includes('jaipur') ? 'JAI' : src.includes('jodhpur') ? 'JDH' : 'UDR',
+        departureTime: '16:40',
+        arrivalAirport: destAirport.name,
+        arrivalCode: destAirport.code,
+        arrivalTime: '17:40',
+        duration: '1h 00m',
+        nonStop: true,
+        pricePerSeat: 3400,
+        currency: 'INR',
+        cabinClass: 'Economy',
+        baggage: '15 kg check-in · 7 kg cabin',
+        punctualityScore: '91% On-Time',
+        carbonKg: 32,
+      },
+    ];
+  }
 
   if (isDelhi) {
+    if (destIsUdaipur) {
+      return [
+        {
+          id: 'fl-del-udr-1',
+          airline: 'Air India',
+          flightNumber: 'AI 471',
+          logo: '🛩️',
+          departureAirport: 'Indira Gandhi Int’l Airport (T3)',
+          departureCode: 'DEL',
+          departureTime: '13:20',
+          arrivalAirport: 'Maharana Pratap Airport Udaipur (UDR)',
+          arrivalCode: 'UDR',
+          arrivalTime: '14:40',
+          duration: '1h 20m',
+          nonStop: true,
+          pricePerSeat: 4250,
+          currency: 'INR',
+          cabinClass: 'Economy',
+          baggage: '20 kg check-in · 7 kg cabin · Complimentary Meal',
+          punctualityScore: '93% On-Time',
+          carbonKg: 52,
+        },
+        {
+          id: 'fl-del-udr-2',
+          airline: 'IndiGo',
+          flightNumber: '6E 2145',
+          logo: '✈️',
+          departureAirport: 'Indira Gandhi Int’l Airport (T2)',
+          departureCode: 'DEL',
+          departureTime: '08:50',
+          arrivalAirport: 'Maharana Pratap Airport Udaipur (UDR)',
+          arrivalCode: 'UDR',
+          arrivalTime: '10:15',
+          duration: '1h 25m',
+          nonStop: true,
+          pricePerSeat: 3890,
+          currency: 'INR',
+          cabinClass: 'Economy',
+          baggage: '15 kg check-in · 7 kg cabin',
+          punctualityScore: '96% On-Time',
+          carbonKg: 50,
+        },
+        {
+          id: 'fl-del-udr-3',
+          airline: 'Vistara / Air India',
+          flightNumber: 'UK 627',
+          logo: '✨',
+          departureAirport: 'Indira Gandhi Int’l Airport (T3)',
+          departureCode: 'DEL',
+          departureTime: '17:15',
+          arrivalAirport: 'Maharana Pratap Airport Udaipur (UDR)',
+          arrivalCode: 'UDR',
+          arrivalTime: '18:40',
+          duration: '1h 25m',
+          nonStop: true,
+          pricePerSeat: 5100,
+          currency: 'INR',
+          cabinClass: 'Premium Economy',
+          baggage: '25 kg check-in · 7 kg cabin',
+          punctualityScore: '94% On-Time',
+          carbonKg: 54,
+        },
+      ];
+    }
+
+    if (destIsJodhpur) {
+      return [
+        {
+          id: 'fl-del-jdh-1',
+          airline: 'IndiGo',
+          flightNumber: '6E 2471',
+          logo: '✈️',
+          departureAirport: 'Indira Gandhi Int’l Airport (T2)',
+          departureCode: 'DEL',
+          departureTime: '13:10',
+          arrivalAirport: 'Jodhpur Civil Airport (JDH)',
+          arrivalCode: 'JDH',
+          arrivalTime: '14:25',
+          duration: '1h 15m',
+          nonStop: true,
+          pricePerSeat: 4400,
+          currency: 'INR',
+          cabinClass: 'Economy',
+          baggage: '15 kg check-in · 7 kg cabin',
+          punctualityScore: '91% On-Time',
+          carbonKg: 52,
+        },
+        {
+          id: 'fl-del-jdh-2',
+          airline: 'Air India',
+          flightNumber: 'AI 481',
+          logo: '🛩️',
+          departureAirport: 'Indira Gandhi Int’l Airport (T3)',
+          departureCode: 'DEL',
+          departureTime: '09:20',
+          arrivalAirport: 'Jodhpur Civil Airport (JDH)',
+          arrivalCode: 'JDH',
+          arrivalTime: '10:45',
+          duration: '1h 25m',
+          nonStop: true,
+          pricePerSeat: 4850,
+          currency: 'INR',
+          cabinClass: 'Economy',
+          baggage: '20 kg check-in · 7 kg cabin',
+          punctualityScore: '94% On-Time',
+          carbonKg: 55,
+        },
+      ];
+    }
+
+    // Default to Jaipur from Delhi
     return [
       {
         id: 'fl-del-jai-1',
@@ -181,44 +357,24 @@ export function getFlightsForRoute(sourceCityName: string, destinationName: stri
         carbonKg: 45,
       },
       {
-        id: 'fl-del-jdh-3',
-        airline: 'IndiGo',
-        flightNumber: '6E 2471',
+        id: 'fl-del-jai-3',
+        airline: 'Akasa Air',
+        flightNumber: 'QP 1341',
         logo: '✈️',
         departureAirport: 'Indira Gandhi Int’l Airport (T2)',
         departureCode: 'DEL',
-        departureTime: '13:10',
-        arrivalAirport: 'Jodhpur Civil Airport',
-        arrivalCode: 'JDH',
-        arrivalTime: '14:25',
-        duration: '1h 15m',
+        departureTime: '17:30',
+        arrivalAirport: 'Jaipur International Airport (T2)',
+        arrivalCode: 'JAI',
+        arrivalTime: '18:35',
+        duration: '1h 05m',
         nonStop: true,
-        pricePerSeat: 4400,
+        pricePerSeat: 3350,
         currency: 'INR',
         cabinClass: 'Economy',
         baggage: '15 kg check-in · 7 kg cabin',
-        punctualityScore: '91% On-Time',
-        carbonKg: 52,
-      },
-      {
-        id: 'fl-del-udr-4',
-        airline: 'Air India',
-        flightNumber: 'AI 471',
-        logo: '🛩️',
-        departureAirport: 'Indira Gandhi Int’l Airport (T3)',
-        departureCode: 'DEL',
-        departureTime: '15:30',
-        arrivalAirport: 'Maharana Pratap Airport Udaipur',
-        arrivalCode: 'UDR',
-        arrivalTime: '16:50',
-        duration: '1h 20m',
-        nonStop: true,
-        pricePerSeat: 4650,
-        currency: 'INR',
-        cabinClass: 'Economy',
-        baggage: '15 kg check-in · 7 kg cabin',
-        punctualityScore: '92% On-Time',
-        carbonKg: 55,
+        punctualityScore: '95% On-Time',
+        carbonKg: 44,
       },
     ];
   }
@@ -226,17 +382,17 @@ export function getFlightsForRoute(sourceCityName: string, destinationName: stri
   if (isMumbai) {
     return [
       {
-        id: 'fl-bom-jai-1',
-        airline: 'IndiGo',
+        id: 'fl-bom-dest-1',
+        airline: 'IndiGo Non-Stop',
         flightNumber: '6E 5212',
         logo: '✈️',
         departureAirport: 'Chhatrapati Shivaji Maharaj Int’l (T2)',
         departureCode: 'BOM',
         departureTime: '06:05',
-        arrivalAirport: 'Jaipur International Airport (T2)',
-        arrivalCode: 'JAI',
-        arrivalTime: '07:50',
-        duration: '1h 45m',
+        arrivalAirport: destAirport.name,
+        arrivalCode: destAirport.code,
+        arrivalTime: '07:55',
+        duration: '1h 50m',
         nonStop: true,
         pricePerSeat: 4850,
         currency: 'INR',
@@ -246,39 +402,39 @@ export function getFlightsForRoute(sourceCityName: string, destinationName: stri
         carbonKg: 78,
       },
       {
-        id: 'fl-bom-udr-2',
-        airline: 'Air India Express',
-        flightNumber: 'IX 2942',
+        id: 'fl-bom-dest-2',
+        airline: 'Air India Direct',
+        flightNumber: 'AI 643',
         logo: '🛩️',
-        departureAirport: 'Chhatrapati Shivaji Maharaj Int’l (T1)',
+        departureAirport: 'Chhatrapati Shivaji Maharaj Int’l (T2)',
         departureCode: 'BOM',
         departureTime: '10:20',
-        arrivalAirport: 'Maharana Pratap Airport Udaipur',
-        arrivalCode: 'UDR',
-        arrivalTime: '11:45',
-        duration: '1h 25m',
+        arrivalAirport: destAirport.name,
+        arrivalCode: destAirport.code,
+        arrivalTime: '12:05',
+        duration: '1h 45m',
         nonStop: true,
-        pricePerSeat: 4500,
+        pricePerSeat: 5400,
         currency: 'INR',
         cabinClass: 'Economy',
-        baggage: '15 kg check-in · 7 kg cabin',
-        punctualityScore: '90% On-Time',
-        carbonKg: 65,
+        baggage: '20 kg check-in · 7 kg cabin · Complimentary Meal',
+        punctualityScore: '91% On-Time',
+        carbonKg: 80,
       },
       {
-        id: 'fl-bom-jdh-3',
-        airline: 'Akasa Air',
+        id: 'fl-bom-dest-3',
+        airline: 'Akasa Air Express',
         flightNumber: 'QP 1421',
         logo: '✈️',
         departureAirport: 'Chhatrapati Shivaji Maharaj Int’l (T2)',
         departureCode: 'BOM',
-        departureTime: '14:40',
-        arrivalAirport: 'Jodhpur Civil Airport',
-        arrivalCode: 'JDH',
-        arrivalTime: '16:20',
-        duration: '1h 40m',
+        departureTime: '16:40',
+        arrivalAirport: destAirport.name,
+        arrivalCode: destAirport.code,
+        arrivalTime: '18:25',
+        duration: '1h 45m',
         nonStop: true,
-        pricePerSeat: 5200,
+        pricePerSeat: 4650,
         currency: 'INR',
         cabinClass: 'Economy',
         baggage: '15 kg check-in · 7 kg cabin',
@@ -288,55 +444,68 @@ export function getFlightsForRoute(sourceCityName: string, destinationName: stri
     ];
   }
 
-  // Default / Other cities (Bengaluru, Kolkata, Hyderabad, etc.)
-  const originCode = isBengaluru ? 'BLR' : isKolkata ? 'CCU' : 'ORIGIN';
+  // Origins like Bengaluru, Kolkata, Hyderabad, Ahmedabad, Chennai, etc.
+  const originCode = isBengaluru
+    ? 'BLR'
+    : isKolkata
+    ? 'CCU'
+    : isHyderabad
+    ? 'HYD'
+    : isAhmedabad
+    ? 'AMD'
+    : 'ORIGIN';
+
   const airportName = isBengaluru
     ? 'Kempegowda Int’l Airport (T2)'
     : isKolkata
     ? 'Netaji Subhash Chandra Bose Int’l (T2)'
+    : isHyderabad
+    ? 'Rajiv Gandhi Int’l Airport'
+    : isAhmedabad
+    ? 'Sardar Vallabhbhai Patel Int’l'
     : `${sourceCityName} Airport`;
 
   return [
     {
-      id: 'fl-gen-jai-1',
-      airline: 'IndiGo',
+      id: `fl-${originCode.toLowerCase()}-dest-1`,
+      airline: 'IndiGo Express',
       flightNumber: '6E 6428',
       logo: '✈️',
       departureAirport: airportName,
       departureCode: originCode,
       departureTime: '07:30',
-      arrivalAirport: 'Jaipur International Airport (T2)',
-      arrivalCode: 'JAI',
+      arrivalAirport: destAirport.name,
+      arrivalCode: destAirport.code,
       arrivalTime: '09:55',
       duration: '2h 25m',
       nonStop: true,
-      pricePerSeat: 6400,
+      pricePerSeat: 5900,
       currency: 'INR',
       cabinClass: 'Economy',
       baggage: '15 kg check-in · 7 kg cabin',
       punctualityScore: '92% On-Time',
-      carbonKg: 110,
+      carbonKg: 95,
     },
     {
-      id: 'fl-gen-udr-2',
+      id: `fl-${originCode.toLowerCase()}-dest-2`,
       airline: 'Air India',
       flightNumber: 'AI 593',
       logo: '🛩️',
       departureAirport: airportName,
       departureCode: originCode,
       departureTime: '11:15',
-      arrivalAirport: 'Maharana Pratap Airport Udaipur',
-      arrivalCode: 'UDR',
+      arrivalAirport: destAirport.name,
+      arrivalCode: destAirport.code,
       arrivalTime: '14:20',
       duration: '3h 05m',
       nonStop: false,
       stops: '1-stop via DEL (45m layover)',
-      pricePerSeat: 7850,
+      pricePerSeat: 6850,
       currency: 'INR',
       cabinClass: 'Economy',
       baggage: '20 kg check-in · 7 kg cabin · Complimentary Snacks',
-      punctualityScore: '88% On-Time',
-      carbonKg: 125,
+      punctualityScore: '89% On-Time',
+      carbonKg: 110,
     },
   ];
 }
@@ -345,11 +514,189 @@ export function getFlightsForRoute(sourceCityName: string, destinationName: stri
  * Returns tailored Indian Railways train options
  */
 export function getTrainsForRoute(sourceCityName: string, destinationName: string): TrainOption[] {
-  const isDelhi = sourceCityName.toLowerCase().includes('delhi');
-  const isMumbai = sourceCityName.toLowerCase().includes('mumbai');
-  const isAhmedabad = sourceCityName.toLowerCase().includes('ahmedabad');
+  const src = sourceCityName.toLowerCase();
+  const dest = destinationName.toLowerCase();
+
+  const isDelhi = src.includes('delhi');
+  const isMumbai = src.includes('mumbai');
+  const isAhmedabad = src.includes('ahmedabad');
+
+  const destIsJodhpur = dest.includes('jodhpur');
+  const destIsUdaipur = dest.includes('udaipur');
+  const destIsJaisalmer = dest.includes('jaisalmer');
+
+  // Intercity corridor (e.g. Jaipur to Jodhpur)
+  if (src.includes('jaipur') && destIsJodhpur) {
+    return [
+      {
+        id: 'tr-jp-ju-vb-1',
+        trainName: 'Jaipur – Jodhpur Vande Bharat Express',
+        trainNumber: '20977',
+        departureStation: 'Jaipur Junction (JP)',
+        departureStationCode: 'JP',
+        departureTime: '06:00',
+        arrivalStation: 'Jodhpur Junction (JU)',
+        arrivalStationCode: 'JU',
+        arrivalTime: '10:30',
+        duration: '4h 30m',
+        daysRunning: 'Except Wed',
+        speedType: 'Vande Bharat Express',
+        cateringIncluded: true,
+        punctualityRate: '97% On-Time (Semi-High Speed)',
+        classes: [
+          { code: 'EC', name: 'Executive Chair Car', fare: 1650, status: 'Available', availableCount: 18 },
+          { code: 'CC', name: 'AC Chair Car', fare: 885, status: 'Available', availableCount: 94 },
+        ],
+      },
+      {
+        id: 'tr-jp-ju-sf-2',
+        trainName: 'Marwar Superfast Express',
+        trainNumber: '12465',
+        departureStation: 'Jaipur Junction (JP)',
+        departureStationCode: 'JP',
+        departureTime: '13:45',
+        arrivalStation: 'Jodhpur Junction (JU)',
+        arrivalStationCode: 'JU',
+        arrivalTime: '18:50',
+        duration: '5h 05m',
+        daysRunning: 'Daily',
+        speedType: 'Superfast Express',
+        cateringIncluded: false,
+        punctualityRate: '92% On-Time',
+        classes: [
+          { code: '2A', name: 'Second AC', fare: 880, status: 'Available', availableCount: 20 },
+          { code: '3A', name: 'Third AC', fare: 620, status: 'Available', availableCount: 52 },
+        ],
+      },
+    ];
+  }
+
+  // Intercity corridor: Jodhpur to Jaisalmer
+  if (src.includes('jodhpur') && destIsJaisalmer) {
+    return [
+      {
+        id: 'tr-ju-jsa-1',
+        trainName: 'Jodhpur – Jaisalmer Express',
+        trainNumber: '14810',
+        departureStation: 'Jodhpur Junction (JU)',
+        departureStationCode: 'JU',
+        departureTime: '07:05',
+        arrivalStation: 'Jaisalmer Railway Station (JSM)',
+        arrivalStationCode: 'JSM',
+        arrivalTime: '12:40',
+        duration: '5h 35m',
+        daysRunning: 'Daily',
+        speedType: 'Superfast Express',
+        cateringIncluded: false,
+        punctualityRate: '94% On-Time (Desert Thar Route)',
+        classes: [
+          { code: '2A', name: 'Second AC', fare: 790, status: 'Available', availableCount: 14 },
+          { code: '3A', name: 'Third AC', fare: 560, status: 'Available', availableCount: 48 },
+        ],
+      },
+    ];
+  }
+
+  // Intercity corridor: Jodhpur / Jaisalmer to Udaipur
+  if ((src.includes('jodhpur') || src.includes('jaisalmer')) && destIsUdaipur) {
+    return [
+      {
+        id: 'tr-ju-udz-1',
+        trainName: 'Aravalli Heritage Express',
+        trainNumber: '19707',
+        departureStation: 'Jodhpur Junction (JU)',
+        departureStationCode: 'JU',
+        departureTime: '06:30',
+        arrivalStation: 'Udaipur City (UDZ)',
+        arrivalStationCode: 'UDZ',
+        arrivalTime: '12:45',
+        duration: '6h 15m',
+        daysRunning: 'Daily',
+        speedType: 'Superfast Express',
+        cateringIncluded: true,
+        punctualityRate: '91% On-Time',
+        classes: [
+          { code: '2A', name: 'Second AC', fare: 920, status: 'Available', availableCount: 12 },
+          { code: '3A', name: 'Third AC', fare: 640, status: 'Available', availableCount: 40 },
+        ],
+      },
+    ];
+  }
 
   if (isDelhi) {
+    if (destIsUdaipur) {
+      return [
+        {
+          id: 'tr-del-mewar-1',
+          trainName: 'Mewar Superfast Express',
+          trainNumber: '12963',
+          departureStation: 'Hazrat Nizamuddin (NZM)',
+          departureStationCode: 'NZM',
+          departureTime: '18:25',
+          arrivalStation: 'Udaipur City (UDZ)',
+          arrivalStationCode: 'UDZ',
+          arrivalTime: '07:15 (Next Day)',
+          duration: '12h 50m',
+          daysRunning: 'Daily',
+          speedType: 'Superfast Express',
+          cateringIncluded: false,
+          punctualityRate: '95% On-Time',
+          classes: [
+            { code: '1A', name: 'First AC (Coupe)', fare: 2850, status: 'Available', availableCount: 6 },
+            { code: '2A', name: 'Second AC', fare: 1680, status: 'Available', availableCount: 24 },
+            { code: '3A', name: 'Third AC', fare: 1190, status: 'Available', availableCount: 75 },
+          ],
+        },
+        {
+          id: 'tr-del-chetak-4',
+          trainName: 'Chetak Express',
+          trainNumber: '20473',
+          departureStation: 'Delhi Sarai Rohilla (DEE)',
+          departureStationCode: 'DEE',
+          departureTime: '19:40',
+          arrivalStation: 'Udaipur City (UDZ)',
+          arrivalStationCode: 'UDZ',
+          arrivalTime: '07:48 (Next Day)',
+          duration: '12h 08m',
+          daysRunning: 'Daily',
+          speedType: 'Superfast Express',
+          cateringIncluded: false,
+          punctualityRate: '93% On-Time',
+          classes: [
+            { code: '1A', name: 'First AC (Coupe/Cabin)', fare: 2650, status: 'Available', availableCount: 4 },
+            { code: '2A', name: 'Second AC', fare: 1580, status: 'Available', availableCount: 18 },
+            { code: '3A', name: 'Third AC', fare: 1120, status: 'Available', availableCount: 60 },
+          ],
+        },
+      ];
+    }
+
+    if (destIsJodhpur) {
+      return [
+        {
+          id: 'tr-del-mandore-1',
+          trainName: 'Mandore Superfast Express',
+          trainNumber: '22995',
+          departureStation: 'Old Delhi Railway Station (DLI)',
+          departureStationCode: 'DLI',
+          departureTime: '21:20',
+          arrivalStation: 'Jodhpur Junction (JU)',
+          arrivalStationCode: 'JU',
+          arrivalTime: '07:35 (Next Day)',
+          duration: '10h 15m',
+          daysRunning: 'Daily',
+          speedType: 'Superfast Express',
+          cateringIncluded: false,
+          punctualityRate: '96% On-Time (Overnight Sleeper)',
+          classes: [
+            { code: '1A', name: 'First AC', fare: 2450, status: 'Available', availableCount: 6 },
+            { code: '2A', name: 'Second AC', fare: 1450, status: 'Available', availableCount: 28 },
+            { code: '3A', name: 'Third AC', fare: 1020, status: 'Available', availableCount: 82 },
+          ],
+        },
+      ];
+    }
+
     return [
       {
         id: 'tr-del-vb-1',
@@ -410,27 +757,6 @@ export function getTrainsForRoute(sourceCityName: string, destinationName: strin
           { code: '1A', name: 'First AC', fare: 1540, status: 'Available', availableCount: 6 },
           { code: '2A', name: 'Second AC', fare: 940, status: 'Available', availableCount: 22 },
           { code: '3A', name: 'Third AC', fare: 680, status: 'Available', availableCount: 54 },
-        ],
-      },
-      {
-        id: 'tr-del-chetak-4',
-        trainName: 'Chetak Express (Direct to Udaipur)',
-        trainNumber: '20473',
-        departureStation: 'Delhi Sarai Rohilla (DEE)',
-        departureStationCode: 'DEE',
-        departureTime: '19:40',
-        arrivalStation: 'Udaipur City (UDZ)',
-        arrivalStationCode: 'UDZ',
-        arrivalTime: '07:48 (Next Day)',
-        duration: '12h 08m',
-        daysRunning: 'Daily',
-        speedType: 'Superfast Express',
-        cateringIncluded: false,
-        punctualityRate: '93% On-Time',
-        classes: [
-          { code: '1A', name: 'First AC (Coupe/Cabin)', fare: 2650, status: 'Available', availableCount: 4 },
-          { code: '2A', name: 'Second AC', fare: 1580, status: 'Available', availableCount: 18 },
-          { code: '3A', name: 'Third AC', fare: 1120, status: 'Available', availableCount: 60 },
         ],
       },
     ];
@@ -510,8 +836,72 @@ export function getTrainsForRoute(sourceCityName: string, destinationName: strin
  * Returns Chauffeured Cabs & Roadway options from chosen origin
  */
 export function getCabsForRoute(sourceCityName: string, destinationName: string): CabOption[] {
-  const isDelhi = sourceCityName.toLowerCase().includes('delhi');
-  const isAhmedabad = sourceCityName.toLowerCase().includes('ahmedabad');
+  const src = sourceCityName.toLowerCase();
+  const dest = destinationName.toLowerCase();
+
+  const isDelhi = src.includes('delhi');
+  const isIntercity = src.includes('jaipur') || src.includes('jodhpur') || src.includes('jaisalmer') || src.includes('udaipur');
+
+  // Intercity heritage transfer (e.g. Jodhpur to Udaipur via Ranakpur, or Jaipur to Jodhpur via Ajmer)
+  if (isIntercity) {
+    return [
+      {
+        id: 'cab-inter-suv-1',
+        vehicleCategory: 'Prime SUV',
+        vehicleModel: 'Toyota Innova Crysta (AC)',
+        capacityPassengers: 6,
+        luggageCapacityBags: 5,
+        airConditioned: true,
+        estimatedPrice: 4800,
+        ratePerKm: '₹16.5 / km',
+        tollAndTaxesIncluded: true,
+        durationEstimate: '4h 45m (Includes 1h sightseeing pitstop)',
+        routeHighlights: [
+          `${sourceCityName} to ${destinationName} via heritage scenic bypass`,
+          'Complimentary 1-hour pitstop at historic monuments / stepwells on route',
+          'Fastag automated toll included, state passenger permits active',
+        ],
+        chauffeurDetails: 'Rajasthan heritage tourist chauffeur, knows top local dhabas & stepwells.',
+        fuelType: 'Diesel',
+      },
+      {
+        id: 'cab-inter-sedan-2',
+        vehicleCategory: 'Sedan',
+        vehicleModel: 'Maruti Suzuki Dzire (AC)',
+        capacityPassengers: 3,
+        luggageCapacityBags: 2,
+        airConditioned: true,
+        estimatedPrice: 3200,
+        ratePerKm: '₹12.0 / km',
+        tollAndTaxesIncluded: true,
+        durationEstimate: '4h 30m direct highway transfer',
+        routeHighlights: [
+          'Direct point-to-point hotel lobby to hotel lobby transfer',
+          'Clean air-conditioned cab, bottled mineral water provided',
+        ],
+        chauffeurDetails: 'Verified local driver, commercial passenger license holder.',
+        fuelType: 'Petrol / CNG',
+      },
+      {
+        id: 'cab-inter-lux-3',
+        vehicleCategory: 'Luxury Chauffeur',
+        vehicleModel: 'Mercedes-Benz E-Class / Fortuner',
+        capacityPassengers: 4,
+        luggageCapacityBags: 4,
+        airConditioned: true,
+        estimatedPrice: 9500,
+        ratePerKm: '₹32.0 / km',
+        tollAndTaxesIncluded: true,
+        durationEstimate: '4h 15m (VIP Royal Transfer)',
+        routeHighlights: [
+          'Royal Haveli door-to-door concierge with luggage handling',
+          'Onboard Wi-Fi and chilled Himalayan spring water',
+        ],
+        chauffeurDetails: 'Uniformed executive chauffeur with five-star hospitality training.',
+        fuelType: 'EV / Green',
+      },
+    ];
+  }
 
   if (isDelhi) {
     return [
@@ -527,7 +917,7 @@ export function getCabsForRoute(sourceCityName: string, destinationName: string)
         tollAndTaxesIncluded: true,
         durationEstimate: '4h 15m (via NE4 Delhi-Mumbai Expressway)',
         routeHighlights: [
-          'Delhi → Sohna Elevated Corridor → NE4 Expressway Spur → Dausa Interchange → Jaipur bypass',
+          `Delhi/NCR → Sohna Elevated Corridor → NE4 Expressway Spur → ${destinationName}`,
           'Smooth 120 km/h expressway surface with minimal city congestion',
           'Fastag automated toll included (~₹480 value)',
         ],
@@ -546,7 +936,7 @@ export function getCabsForRoute(sourceCityName: string, destinationName: string)
         tollAndTaxesIncluded: true,
         durationEstimate: '4h 00m (Expressway)',
         routeHighlights: [
-          'Direct doorstep pickup from Delhi/NCR residence or airport terminal',
+          `Direct doorstep pickup from Delhi/NCR residence to ${destinationName} hotel`,
           'Reclining plush leather captain seats, USB charging on every row',
           'Free 30-minute pitstop at Waycool Highway Oasis for masala tea & snacks',
         ],
@@ -587,9 +977,9 @@ export function getCabsForRoute(sourceCityName: string, destinationName: string)
       estimatedPrice: 7500,
       ratePerKm: '₹19.0 / km',
       tollAndTaxesIncluded: true,
-      durationEstimate: 'Dependent on route (Full Day Rental available)',
+      durationEstimate: `Dedicated Circuit Cab to ${destinationName}`,
       routeHighlights: [
-        'Dedicated vehicle & chauffeur for multi-day Rajasthan circuit',
+        `Dedicated vehicle & chauffeur for ${sourceCityName} to ${destinationName} circuit`,
         'Sightseeing flexibility across forts, stepwells & heritage alleys',
         'State border road tax and parking slips fully pre-paid',
       ],
@@ -606,7 +996,7 @@ export function getCabsForRoute(sourceCityName: string, destinationName: string)
       estimatedPrice: 4200,
       ratePerKm: '₹14.0 / km',
       tollAndTaxesIncluded: true,
-      durationEstimate: 'Local airport/station transfer & full day city run',
+      durationEstimate: 'Full day city run & intercity transfer',
       routeHighlights: [
         'Door-to-door transfer between airport, hotel, and old city monuments',
         'No surge pricing guarantee',
@@ -620,14 +1010,53 @@ export function getCabsForRoute(sourceCityName: string, destinationName: string)
 /**
  * Returns multi-modal comparison matrix
  */
-export function getMultiModalComparison(sourceCityName: string): MultiModalComparison[] {
+export function getMultiModalComparison(sourceCityName: string, destinationName: string = 'Jaipur'): MultiModalComparison[] {
   const isDelhi = sourceCityName.toLowerCase().includes('delhi');
+  const isIntercity = sourceCityName.toLowerCase().includes('jaipur') || sourceCityName.toLowerCase().includes('jodhpur');
+
+  if (isIntercity) {
+    return [
+      {
+        mode: 'Train',
+        title: `Vande Bharat / Superfast Express (${sourceCityName} → ${destinationName})`,
+        icon: '🚆',
+        doorToDoorTime: '4h 30m (Station to Station)',
+        startingPrice: 885,
+        convenienceRating: 4.8,
+        scenicRating: 4.5,
+        carbonFootprintKg: 12,
+        bestFor: 'Relaxing, air-conditioned intercity rail transit with panoramic landscape views.',
+      },
+      {
+        mode: 'Chauffeured Cab',
+        title: `Chauffeured Highway Cab via Sightseeing Route`,
+        icon: '🚗',
+        doorToDoorTime: '4h 45m (Doorstep to Doorstep)',
+        startingPrice: 3200,
+        convenienceRating: 4.9,
+        scenicRating: 4.8,
+        carbonFootprintKg: 24,
+        bestFor: 'Ultimate flexibility to stop at hidden stepwells, palaces, and authentic dhabas on route.',
+      },
+      {
+        mode: 'Flight',
+        title: `Regional Hopper Flight`,
+        icon: '✈️',
+        doorToDoorTime: '3h 15m (including 2h check-in)',
+        startingPrice: 2950,
+        convenienceRating: 4.2,
+        scenicRating: 3.8,
+        carbonFootprintKg: 28,
+        bestFor: 'Quickest flight connection between major Rajasthan commercial airports.',
+      },
+    ];
+  }
 
   if (isDelhi) {
     return [
       {
         mode: 'Train',
-        title: 'Vande Bharat Express (Train 20978)',
+        title: `Vande Bharat Express (DEL → ${destinationName})`,
         icon: '🚆',
         doorToDoorTime: '4h 15m (City-center to City-center)',
         startingPrice: 990,
@@ -638,7 +1067,7 @@ export function getMultiModalComparison(sourceCityName: string): MultiModalCompa
       },
       {
         mode: 'Flight',
-        title: 'Non-Stop Flight (DEL → JAI)',
+        title: `Non-Stop Flight (DEL → ${destinationName})`,
         icon: '✈️',
         doorToDoorTime: '3h 30m (including 2h airport check-in + transit)',
         startingPrice: 3150,
@@ -664,7 +1093,7 @@ export function getMultiModalComparison(sourceCityName: string): MultiModalCompa
   return [
     {
       mode: 'Flight',
-      title: `Direct / Express Flight from ${sourceCityName}`,
+      title: `Direct / Express Flight from ${sourceCityName} to ${destinationName}`,
       icon: '✈️',
       doorToDoorTime: '4h 30m (total door-to-door)',
       startingPrice: 4850,
@@ -675,7 +1104,7 @@ export function getMultiModalComparison(sourceCityName: string): MultiModalCompa
     },
     {
       mode: 'Train',
-      title: 'Superfast / Duronto Overnight Train',
+      title: `Superfast / Duronto Overnight Train to ${destinationName}`,
       icon: '🚆',
       doorToDoorTime: '15h–18h (Overnight sleeper)',
       startingPrice: 1820,
@@ -686,7 +1115,7 @@ export function getMultiModalComparison(sourceCityName: string): MultiModalCompa
     },
     {
       mode: 'Chauffeured Cab',
-      title: 'Chauffeured Circuit Cab in Rajasthan',
+      title: `Chauffeured Circuit Cab in ${destinationName}`,
       icon: '🚗',
       doorToDoorTime: 'Flexible on-demand',
       startingPrice: 6200,
